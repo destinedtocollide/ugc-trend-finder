@@ -42,7 +42,6 @@ jobs:
           pyinstaller --noconfirm --clean --windowed
           --name "UGC Trend Finder" --icon icon.ico
           --add-data "ui;ui" --add-data "icon.png;." --add-data "icon.ico;." --add-data "build_info.json;."
-          --splash splash.png
           --hidden-import pystray._win32 --collect-all webview
           app.py
 

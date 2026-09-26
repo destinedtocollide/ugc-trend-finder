@@ -71,6 +71,17 @@
   --warn: #b7791f; --warn-bg: rgba(183,121,31,.1); --danger: #dc2626; --danger-bg: rgba(220,38,38,.08);
   color-scheme: light;
 }
+[data-theme="blossom"] {
+  --bg: #fdf4f8; --side: #fff8fb; --card: #ffffff; --card2: #fdf2f7; --soft: #fbe7f0; --soft2: #f6d6e5;
+  --line: #f4dfe9; --line2: #eac7d8; --ink: #2a1520; --ink2: #5c3a4b; --muted: #9a7385;
+  --accent: #e0448a; --accent2: #ea6aa3; --accent-deep: #c9347a; --accent-dim: #fde3ef; --accent-line: #f6bcd6;
+  --accent-rgb: 224,68,138; --on-accent: #ffffff; --chip-on-bg: #e0448a; --chip-on-ink: #ffffff;
+  --log-bg: #fdf2f7; --img1: #ffffff; --img2: #fbe9f1; --ph: #e2b6ca; --nav-hover: #fcecf3; --switch-off: #ecc9d9;
+  --thumb: #efc9da; --thumb-h: #e2abc4; --overlay: rgba(60,20,40,.3); --shadow: rgba(120,40,80,.14); --rank-bg: rgba(255,255,255,.9);
+  --ok: #16a34a; --ok-bg: rgba(22,163,74,.1); --gap: #8b5cf6; --gap-bg: rgba(139,92,246,.1);
+  --warn: #b7791f; --warn-bg: rgba(183,121,31,.1); --danger: #dc2626; --danger-bg: rgba(220,38,38,.08);
+  color-scheme: light;
+}
 body, .side, .card, .stat, .btn, .chip, .nav button, .idea, .item, .input, .path, .status { transition: background-color .25s, border-color .25s, color .25s; }
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
@@ -430,7 +441,7 @@ td.num-c { color: var(--muted); font-variant-numeric: tabular-nums; width: 40px;
 
 /* ---------- momentum charts ---------- */
 :root { --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; }
-[data-theme="daylight"] { --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300; }
+[data-theme="daylight"], [data-theme="blossom"] { --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300; }
 .mo-card { padding: 16px 20px 18px; }
 .actions #mo-kind { flex-wrap: nowrap; }
 .actions #c-sv { flex-wrap: nowrap; gap: 6px; }
@@ -1736,6 +1747,7 @@ const THEMES = [
   { key: "sunset", label: "Sunset", bg: "#14100d", side: "#1a1511", card: "#2a211b", accent: "#ff8a3d", muted: "#4a3c31" },
   { key: "graphite", label: "Graphite", bg: "#111111", side: "#161616", card: "#232323", accent: "#e8e8e8", muted: "#3d3d3d" },
   { key: "daylight", label: "Daylight", bg: "#f4f5f8", side: "#ffffff", card: "#eef0f4", accent: "#3b7cf0", muted: "#cbd1da" },
+  { key: "blossom", label: "Blossom", bg: "#fdf4f8", side: "#fff8fb", card: "#fbe7f0", accent: "#e0448a", muted: "#ecc9d9" },
 ];
 function applyTheme(key) {
   if (!THEMES.find(t => t.key === key)) key = "midnight";

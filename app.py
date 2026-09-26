@@ -199,6 +199,35 @@ class WinFx:
                 pass
 
     @staticmethod
+    def rect(hwnd, visible_frame=False):
+        """(x, y, w, h) of a window. visible_frame=True leaves out the invisible resize border
+        Windows 10/11 puts around normal windows, so it matches what you actually see."""
+        if sys.platform != "win32" or not hwnd:
+            return None
+        try:
+            import ctypes
+            from ctypes import wintypes
+            r = wintypes.RECT()
+            ok = visible_frame and ctypes.windll.dwmapi.DwmGetWindowAttribute(
+                hwnd, 9, ctypes.byref(r), ctypes.sizeof(r)) == 0
+            if not ok and not ctypes.windll.user32.GetWindowRect(hwnd, ctypes.byref(r)):
+                return None
+            w, h = r.right - r.left, r.bottom - r.top
+            return (r.left, r.top, w, h) if w > 0 and h > 0 else None
+        except Exception:
+            return None
+
+    @staticmethod
+    def place(hwnd, x, y, w, h):
+        try:
+            import ctypes
+            # SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOOWNERZORDER | SWP_NOSENDCHANGING-free (keeps layout updates)
+            ctypes.windll.user32.SetWindowPos(hwnd, 0, int(round(x)), int(round(y)),
+                                              int(round(w)), int(round(h)), 0x0004 | 0x0010 | 0x0200)
+        except Exception:
+            pass
+
+    @staticmethod
     def transitions(hwnd, enabled):
         """Turns Windows' own pop-in animation off while we run ours (so they don't fight)."""
         if sys.platform != "win32" or not hwnd:
@@ -345,6 +374,15 @@ class Api:
 
     def thumbs(self, ids):
         return load_thumbs(ids)
+
+    def momentum(self):
+        s = self._app.settings
+        try:
+            return core.momentum_history(os.path.join(s["out_dir"], "data"),
+                                         include_roblox=bool(s.get("include_roblox")))
+        except Exception:
+            write_log(traceback.format_exc())
+            return {"points": [], "themes": [], "items": [], "error": True}
 
     def boot_progress(self, pct, text=""):
         self._app.splash_progress(pct, text)
@@ -870,6 +908,8 @@ class TrendApp:
         main = getattr(self, "hwnd", None)
         if self.hidden:                             # started in the tray: nothing to animate
             self.emit_raw({"type": "reveal"})
+        elif sp is not None and self._grow_into_app(sp, sp_hwnd, main):
+            pass
         else:
             fade_main = WinFx.layered(main, True)
             if fade_main:
@@ -909,6 +949,55 @@ class TrendApp:
             except Exception:
                 pass
             self.splash = None
+
+    def _grow_into_app(self, sp, sp_hwnd, main):
+        """The loading window stretches out until it covers exactly where the app window is,
+        then fades away on top of the app. Returns False if this can't be done (then the
+        simpler cross-fade runs instead)."""
+        start = WinFx.rect(sp_hwnd)
+        end = WinFx.rect(main, visible_frame=True)
+        if not (start and end and WinFx.layered(main, True)):
+            return False
+        WinFx.alpha(main, 0)                        # the app stays invisible while the box grows
+        WinFx.transitions(main, False)
+        try:
+            self.window.show()
+        except Exception:
+            pass
+        try:
+            sp.evaluate_js("document.body.classList.add('leaving')")   # logo + bar fade out
+        except Exception:
+            pass
+        time.sleep(0.16)
+
+        def ease(t):                                # smooth start and smooth landing
+            return 4 * t * t * t if t < 0.5 else 1 - (-2 * t + 2) ** 3 / 2
+
+        dur, t0 = 0.46, time.perf_counter()
+        while True:
+            t = min(1.0, (time.perf_counter() - t0) / dur)
+            e = ease(t)
+            WinFx.place(sp_hwnd, *(a + (b - a) * e for a, b in zip(start, end)))
+            if t >= 1:
+                break
+            time.sleep(1 / 144)
+        WinFx.alpha(main, 255)                      # app is now fully under the loading window
+        self.emit_raw({"type": "reveal"})           # its content starts zooming in
+        fade_sp = WinFx.layered(sp_hwnd, True)
+        dur, t0 = 0.3, time.perf_counter()
+        while fade_sp:
+            t = min(1.0, (time.perf_counter() - t0) / dur)
+            WinFx.alpha(sp_hwnd, 255 * (1 - t) ** 1.6)
+            if t >= 1:
+                break
+            time.sleep(1 / 144)
+        try:
+            sp.hide()
+        except Exception:
+            pass
+        WinFx.layered(main, False)
+        WinFx.transitions(main, True)
+        return True
 
     def _reveal_watchdog(self):
         time.sleep(25)                              # never leave the user staring at a loading window

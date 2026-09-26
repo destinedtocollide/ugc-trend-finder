@@ -38,7 +38,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-VERSION = "1.2"
+VERSION = "1.7"
 API = "https://catalog.roblox.com/v1/search/items/details"
 UA = "UGC-Trend-Finder/1.0 (personal market research tool)"
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -985,6 +985,124 @@ def summarize(result, records, meta, report_path, thumbs=None):
             "ideas": ideas, "themes": themes,
             "top_items": [ex(i) for i in result.get("top_items", [])],
             "fresh_items": [ex(i) for i in result.get("fresh", [])[:12]]}
+
+
+_SNAP_CACHE = {}
+
+
+def _snapshot_signals(path, include_roblox=False):
+    """Demand signals from one saved scan: each theme's and item's share of all
+    bestseller activity (in %), and how its past-day sales compare with its past-week sales."""
+    key = (path, os.path.getmtime(path), include_roblox)
+    if key in _SNAP_CACHE:
+        return _SNAP_CACHE[key]
+    with open(path, encoding="utf-8") as f:
+        snap = json.load(f)
+    records = snap.get("records") or {}
+    qualified = set((snap.get("theme_ranks") or {}).keys())
+    total, day_total, week_total = 0.0, 0.0, 0.0
+    t_w, t_day, t_week, t_items, t_creators = (defaultdict(float), defaultdict(float), defaultdict(float),
+                                              defaultdict(set), defaultdict(set))
+    i_w, i_day, i_week = defaultdict(float), defaultdict(float), defaultdict(float)
+    words = {}
+    for ap in snap.get("appearances") or []:
+        spec = LISTS.get(ap.get("list"))
+        if not spec or spec["role"] != "demand":
+            continue
+        rec = records.get(str(ap["id"]))
+        if not rec or (rec.get("by_roblox") and not include_roblox):
+            continue
+        w = spec["weight"] * rank_weight(ap["rank"])
+        total += w
+        iid = str(ap["id"])
+        i_w[iid] += w
+        if ap["list"] == "sales_day":
+            day_total += w
+            i_day[iid] += w
+        elif ap["list"] == "sales_week":
+            week_total += w
+            i_week[iid] += w
+        if iid not in words:
+            words[iid] = extract_words(rec.get("name", ""))[0]
+        for t in words[iid]:
+            t_w[t] += w
+            t_items[t].add(iid)
+            t_creators[t].add(rec.get("creator"))
+            if ap["list"] == "sales_day":
+                t_day[t] += w
+            elif ap["list"] == "sales_week":
+                t_week[t] += w
+
+    def mom(day, week):
+        if not day_total or not week_total:
+            return None
+        s = 0.002
+        return round((day / day_total + s) / (week / week_total + s), 2)
+
+    themes = {}
+    if total:
+        for t, w in t_w.items():
+            ok = (t in qualified) if qualified else (len(t_items[t]) >= 3 and len(t_creators[t]) >= 2)
+            if ok:
+                themes[t] = {"v": round(100 * w / total, 3), "m": mom(t_day[t], t_week[t]), "n": len(t_items[t])}
+    items = {iid: {"v": round(100 * w / total, 3), "m": mom(i_day[iid], i_week[iid])}
+             for iid, w in i_w.items()} if total else {}
+    info = {}
+    for iid in items:
+        r = records[iid]
+        info[iid] = {"name": r.get("name", ""), "type": TYPE_INFO.get(r.get("type"), {}).get("label", ""),
+                     "price": fmt_price(r.get("price")), "creator": r.get("creator"), "favs": r.get("favs") or 0,
+                     "url": item_link(r)}
+    out = {"t": snap.get("created"), "cats": sorted(snap.get("categories") or []),
+           "themes": themes, "items": items, "info": info}
+    _SNAP_CACHE.clear() if len(_SNAP_CACHE) > 400 else None
+    _SNAP_CACHE[key] = out
+    return out
+
+
+def momentum_history(data_dir, include_roblox=False, max_points=90, top=40):
+    """Builds the momentum charts from every saved scan (newest scope only, so numbers compare)."""
+    files = sorted(glob.glob(os.path.join(data_dir, "snapshot_*.json")))[-max_points * 2:]
+    snaps = []
+    for p in files:
+        try:
+            snaps.append(_snapshot_signals(p, include_roblox))
+        except Exception:
+            continue
+    snaps = [s for s in snaps if s["t"]]
+    if not snaps:
+        return {"points": [], "themes": [], "items": []}
+    scope = snaps[-1]["cats"]
+    snaps = [s for s in snaps if s["cats"] == scope][-max_points:]
+    snaps.sort(key=lambda s: s["t"])
+
+    def series(kind):
+        best = defaultdict(float)
+        for i, s in enumerate(snaps):
+            recent = 1.0 + 0.5 * (i == len(snaps) - 1)      # favour what matters now
+            for k, d in s[kind].items():
+                best[k] = max(best[k], d["v"] * recent)
+        keys = [k for k, _ in sorted(best.items(), key=lambda kv: -kv[1])[:top]]
+        out = []
+        for k in keys:
+            row = {"key": k, "v": [], "m": []}
+            for s in snaps:
+                d = s[kind].get(k)
+                row["v"].append(d["v"] if d else 0.0)
+                row["m"].append(d["m"] if d else None)
+            if kind == "items":
+                last = next(s["info"][k] for s in reversed(snaps) if k in s["info"])
+                row.update(last)
+                row["id"] = k
+                row["favs_hist"] = [s["info"][k]["favs"] if k in s["info"] else None for s in snaps]
+            else:
+                row["name"] = k
+                row["n"] = next((s["themes"][k]["n"] for s in reversed(snaps) if k in s["themes"]), 0)
+            out.append(row)
+        return out
+
+    return {"points": [s["t"] for s in snaps], "scope": " + ".join(c.title() for c in scope),
+            "themes": series("themes"), "items": series("items")}
 
 
 def default_out_dir():

@@ -16,7 +16,12 @@ import threading
 import time
 import traceback
 import webbrowser
+import base64
+import io
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
 
 APP_DIR = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
 EXE_DIR = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else APP_DIR
@@ -64,6 +69,7 @@ THEMES = {
 DATA_HOME = os.path.join(os.environ.get("LOCALAPPDATA") or os.path.expanduser("~"), "UGC Trend Finder")
 SETTINGS_PATH = os.path.join(os.path.expanduser("~"), ".ugc_trend_finder_settings.json")
 LOG_PATH = os.path.join(DATA_HOME, "app.log")
+THUMB_DIR = os.path.join(DATA_HOME, "thumbs")
 DEFAULTS = {
     "out_dir": core.default_out_dir(),
     "scope": "all",
@@ -194,6 +200,85 @@ def signal_running_instance():
         return False
 
 
+# ---------------------------------------------------------------- item pictures
+# Pictures are fetched here (not by the page) and kept on disk, so they also show for
+# older scans that never stored them, and keep working after Roblox's links expire.
+_THUMB_MEM = {}
+_THUMB_LOCK = threading.Lock()
+
+
+def _http(url, timeout=20):
+    req = Request(url, headers={"User-Agent": core.UA})
+    with urlopen(req, timeout=timeout) as r:
+        return r.read()
+
+
+def _to_data_uri(raw):
+    """Shrinks the picture (smaller transfer to the page) and returns it as a data URI."""
+    try:
+        from PIL import Image
+        im = Image.open(io.BytesIO(raw))
+        im.thumbnail((320, 320))
+        buf = io.BytesIO()
+        im.save(buf, "WEBP", quality=86, method=4)
+        return "data:image/webp;base64," + base64.b64encode(buf.getvalue()).decode()
+    except Exception:
+        kind = "png" if raw[:4] == b"\x89PNG" else ("webp" if raw[8:12] == b"WEBP" else "jpeg")
+        return f"data:image/{kind};base64," + base64.b64encode(raw).decode()
+
+
+def load_thumbs(ids):
+    """{asset_id: data_uri} for up to 100 ids, from memory, disk, or Roblox."""
+    clean = []
+    for i in ids or []:
+        s = str(i)
+        if s.isdigit() and s not in clean:
+            clean.append(s)
+    clean = clean[:100]
+    out, need = {}, []
+    os.makedirs(THUMB_DIR, exist_ok=True)
+    for i in clean:
+        if i in _THUMB_MEM:
+            out[i] = _THUMB_MEM[i]
+            continue
+        path = os.path.join(THUMB_DIR, i + ".img")
+        try:
+            if os.path.getsize(path) > 0:
+                with open(path, "rb") as f:
+                    out[i] = _THUMB_MEM[i] = _to_data_uri(f.read())
+                continue
+        except OSError:
+            pass
+        need.append(i)
+    if not need:
+        return out
+    try:
+        q = {"assetIds": ",".join(need), "size": "420x420", "format": "Png", "isCircular": "false"}
+        rows = json.loads(_http(core.THUMB_API + "?" + urlencode(q))).get("data") or []
+    except Exception as e:
+        write_log(f"thumbnail lookup failed: {e}")
+        return out
+    urls = {str(r.get("targetId")): r.get("imageUrl") for r in rows
+            if r.get("state") == "Completed" and r.get("imageUrl")}
+
+    def grab(item):
+        aid, url = item
+        try:
+            raw = _http(url)
+            with open(os.path.join(THUMB_DIR, aid + ".img"), "wb") as f:
+                f.write(raw)
+            return aid, _to_data_uri(raw)
+        except Exception:
+            return aid, None
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        for aid, uri in pool.map(grab, urls.items()):
+            if uri:
+                with _THUMB_LOCK:
+                    _THUMB_MEM[aid] = uri
+                out[aid] = uri
+    return out
+
+
 # ---------------------------------------------------------------- the api the page calls
 class Api:
     """Every public method here can be called from the page as pywebview.api.<name>()."""
@@ -203,6 +288,17 @@ class Api:
 
     def ui_ready(self):
         self._app.ui_ready = True
+        return True
+
+    def thumbs(self, ids):
+        return load_thumbs(ids)
+
+    def boot_progress(self, pct, text=""):
+        self._app.splash_progress(pct, text)
+        return True
+
+    def boot_done(self):
+        threading.Thread(target=self._app.reveal, daemon=True).start()
         return True
 
     def get_state(self):
@@ -337,6 +433,8 @@ class TrendApp:
         self.updating = False
         self.lock = threading.Lock()
         self.hwnd = None
+        self.splash = None
+        self.revealed = False
         if self.settings.get("theme") not in THEMES:
             self.settings["theme"] = "midnight"
         # remember whether this start is the first one after an update
@@ -681,6 +779,62 @@ class TrendApp:
             except OSError:
                 break
 
+    # ---- startup window
+    def splash_progress(self, pct, text=""):
+        sp = self.splash
+        if sp is None:
+            return
+        try:
+            sp.evaluate_js("window.setP && setP(%d, %s)" % (int(pct), json.dumps(text or "")))
+        except Exception:
+            pass
+
+    def _splash_loaded(self):
+        close_native_splash()                       # the animated window takes over from the static image
+        try:
+            hwnd = self.splash.native.Handle.ToInt64()
+            import ctypes
+            pref = ctypes.c_int(2)                  # rounded corners on Windows 11
+            ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, 33, ctypes.byref(pref), 4)
+        except Exception:
+            pass
+        self.splash_progress(18, "Starting…")
+
+    def reveal(self):
+        """Loading finished: fill the bar, then swap the loading window for the app."""
+        with self.lock:
+            if self.revealed:
+                return
+            self.revealed = True
+        if self.splash is not None:
+            self.splash_progress(100, "Ready")
+            time.sleep(0.55)
+        if not self.hidden:
+            try:
+                self.window.show()
+            except Exception:
+                pass
+        self.emit_raw({"type": "reveal"})
+        if self.splash is not None:
+            time.sleep(0.12)
+            try:
+                self.splash.destroy()
+            except Exception:
+                pass
+            self.splash = None
+
+    def _reveal_watchdog(self):
+        time.sleep(25)                              # never leave the user staring at a loading window
+        if not self.revealed:
+            write_log("startup took too long; showing the window anyway")
+            self.reveal()
+
+    def emit_raw(self, ev):
+        try:
+            self.window.evaluate_js("window.__ev && window.__ev(%s)" % json.dumps(ev))
+        except Exception:
+            pass
+
     def on_started(self):
         """Runs once the window exists."""
         try:
@@ -690,7 +844,9 @@ class TrendApp:
             dark_titlebar(hwnd, self.settings.get("theme", "midnight"))
         except Exception:
             pass
-        close_native_splash()
+        if self.splash is None:
+            close_native_splash()
+        threading.Thread(target=self._reveal_watchdog, daemon=True).start()
         self.start_tray()
         threading.Thread(target=self.single_instance_server, daemon=True).start()
         threading.Thread(target=self.background_loop, daemon=True).start()
@@ -704,12 +860,21 @@ class TrendApp:
         with open(os.path.join(APP_DIR, "ui", "index.html"), encoding="utf-8") as f:
             page = f.read()
         theme = self.settings.get("theme", "midnight")
-        page = page.replace('<html lang="en">', f'<html lang="en" data-theme="{theme}">', 1)
+        page = page.replace('<html lang="en">', f'<html lang="en" data-theme="{theme}" data-launch="managed">', 1)
+        # The app window loads hidden while a small loading window shows progress; when the
+        # page is ready the loading window closes and the app fades in (see reveal()).
         self.window = webview.create_window(
             APP_NAME, html=page, js_api=Api(self),
             width=1280, height=840, min_size=(960, 640), background_color=THEMES[theme][0], text_select=False,
-            hidden=start_hidden)
+            hidden=True)
         self.window.events.closing += self.on_closing
+        if not start_hidden:
+            with open(os.path.join(APP_DIR, "ui", "splash.html"), encoding="utf-8") as f:
+                sp = f.read().replace('<html lang="en">', f'<html lang="en" data-theme="{theme}">', 1)
+            self.splash = webview.create_window(
+                APP_NAME, html=sp, width=520, height=320, resizable=False, frameless=True,
+                on_top=True, background_color=THEMES[theme][0], text_select=False)
+            self.splash.events.loaded += self._splash_loaded
         webview.start(self.on_started, debug=False, private_mode=False,
                       storage_path=os.path.join(DATA_HOME, "webview"))
         self.quitting = True

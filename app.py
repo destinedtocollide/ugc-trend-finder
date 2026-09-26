@@ -69,7 +69,9 @@ THEMES = {
 DATA_HOME = os.path.join(os.environ.get("LOCALAPPDATA") or os.path.expanduser("~"), "UGC Trend Finder")
 SETTINGS_PATH = os.path.join(os.path.expanduser("~"), ".ugc_trend_finder_settings.json")
 LOG_PATH = os.path.join(DATA_HOME, "app.log")
+SPLASH_TITLE = "UGC Trend Finder - loading"
 THUMB_DIR = os.path.join(DATA_HOME, "thumbs")
+SAVED_PATH = os.path.join(DATA_HOME, "saved_ideas.json")
 DEFAULTS = {
     "out_dir": core.default_out_dir(),
     "scope": "all",
@@ -167,80 +169,168 @@ def dark_titlebar(hwnd, theme="midnight"):
 
 
 class WinFx:
-    """Whole-window fades for the startup hand-off (Windows only; silently does nothing elsewhere)."""
+    """Window positioning and whole-window fades for the startup hand-off.
+    Windows only; every call quietly does nothing elsewhere and never raises."""
     GWL_EXSTYLE, WS_EX_LAYERED, LWA_ALPHA = -20, 0x80000, 0x2
+    _api = None
 
-    @staticmethod
-    def _u32():
-        import ctypes
-        return ctypes.windll.user32 if sys.platform == "win32" else None
+    @classmethod
+    def api(cls):
+        if cls._api is not None or sys.platform != "win32":
+            return cls._api
+        try:
+            import ctypes
+            from ctypes import wintypes as w
+            u, d = ctypes.WinDLL("user32", use_last_error=True), ctypes.WinDLL("dwmapi")
+            H = w.HWND
+            ptr_long = ctypes.c_ssize_t
+            get_long = getattr(u, "GetWindowLongPtrW", None) or u.GetWindowLongW
+            set_long = getattr(u, "SetWindowLongPtrW", None) or u.SetWindowLongW
+            get_long.argtypes, get_long.restype = [H, ctypes.c_int], ptr_long
+            set_long.argtypes, set_long.restype = [H, ctypes.c_int, ptr_long], ptr_long
+            u.SetLayeredWindowAttributes.argtypes = [H, w.DWORD, ctypes.c_ubyte, w.DWORD]
+            u.SetWindowPos.argtypes = [H, H, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_uint]
+            u.GetWindowRect.argtypes = [H, ctypes.POINTER(w.RECT)]
+            u.RedrawWindow.argtypes = [H, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint]
+            u.GetWindowTextW.argtypes = [H, w.LPWSTR, ctypes.c_int]
+            u.GetWindowThreadProcessId.argtypes = [H, ctypes.POINTER(w.DWORD)]
+            u.IsWindowVisible.argtypes = [H]
+            u.GetCursorPos.argtypes = [ctypes.POINTER(w.POINT)]
+            u.MonitorFromPoint.argtypes, u.MonitorFromPoint.restype = [w.POINT, w.DWORD], w.HMONITOR
+            d.DwmSetWindowAttribute.argtypes = [H, w.DWORD, ctypes.c_void_p, w.DWORD]
+            d.DwmGetWindowAttribute.argtypes = [H, w.DWORD, ctypes.c_void_p, w.DWORD]
+
+            class MONITORINFO(ctypes.Structure):
+                _fields_ = [("cbSize", w.DWORD), ("rcMonitor", w.RECT), ("rcWork", w.RECT), ("dwFlags", w.DWORD)]
+            u.GetMonitorInfoW.argtypes = [w.HMONITOR, ctypes.POINTER(MONITORINFO)]
+            cls._api = {"ct": ctypes, "w": w, "u": u, "d": d, "get": get_long, "set": set_long, "MI": MONITORINFO}
+        except Exception:
+            write_log("WinFx setup failed: " + traceback.format_exc())
+            cls._api = None
+        return cls._api
+
+    @classmethod
+    def find(cls, title):
+        """Top-level windows of this process with exactly this title (visible or not)."""
+        a = cls.api()
+        if not a:
+            return []
+        ct, w, u = a["ct"], a["w"], a["u"]
+        me, found = os.getpid(), []
+        proto = ct.WINFUNCTYPE(w.BOOL, w.HWND, w.LPARAM)
+
+        def cb(h, _):
+            pid = w.DWORD()
+            u.GetWindowThreadProcessId(h, ct.byref(pid))
+            if pid.value == me:
+                buf = ct.create_unicode_buffer(256)
+                u.GetWindowTextW(h, buf, 256)
+                if buf.value == title:
+                    found.append(h)
+            return True
+        u.EnumWindows(proto(cb), 0)
+        return found
 
     @classmethod
     def layered(cls, hwnd, on):
-        u = cls._u32()
-        if not u or not hwnd:
+        a = cls.api()
+        if not a or not hwnd:
             return False
         try:
-            ex = u.GetWindowLongW(hwnd, cls.GWL_EXSTYLE)
-            u.SetWindowLongW(hwnd, cls.GWL_EXSTYLE, (ex | cls.WS_EX_LAYERED) if on else (ex & ~cls.WS_EX_LAYERED))
+            ex = a["get"](hwnd, cls.GWL_EXSTYLE)
+            a["set"](hwnd, cls.GWL_EXSTYLE, (ex | cls.WS_EX_LAYERED) if on else (ex & ~cls.WS_EX_LAYERED))
             if not on:                              # Windows asks for a repaint after un-layering
-                u.RedrawWindow(hwnd, None, None, 0x1 | 0x4 | 0x80 | 0x400)
+                a["u"].RedrawWindow(hwnd, None, None, 0x1 | 0x4 | 0x80 | 0x400)
             return True
         except Exception:
+            write_log("WinFx.layered failed: " + traceback.format_exc())
             return False
 
     @classmethod
-    def alpha(cls, hwnd, a):
-        u = cls._u32()
-        if u and hwnd:
+    def alpha(cls, hwnd, v):
+        a = cls.api()
+        if a and hwnd:
             try:
-                u.SetLayeredWindowAttributes(hwnd, 0, max(0, min(255, int(a))), cls.LWA_ALPHA)
+                a["u"].SetLayeredWindowAttributes(hwnd, 0, max(0, min(255, int(v))), cls.LWA_ALPHA)
             except Exception:
                 pass
 
-    @staticmethod
-    def rect(hwnd, visible_frame=False):
+    @classmethod
+    def rect(cls, hwnd, visible_frame=False):
         """(x, y, w, h) of a window. visible_frame=True leaves out the invisible resize border
         Windows 10/11 puts around normal windows, so it matches what you actually see."""
-        if sys.platform != "win32" or not hwnd:
+        a = cls.api()
+        if not a or not hwnd:
             return None
         try:
-            import ctypes
-            from ctypes import wintypes
-            r = wintypes.RECT()
-            ok = visible_frame and ctypes.windll.dwmapi.DwmGetWindowAttribute(
-                hwnd, 9, ctypes.byref(r), ctypes.sizeof(r)) == 0
-            if not ok and not ctypes.windll.user32.GetWindowRect(hwnd, ctypes.byref(r)):
+            ct, r = a["ct"], a["w"].RECT()
+            ok = visible_frame and a["d"].DwmGetWindowAttribute(hwnd, 9, ct.byref(r), ct.sizeof(r)) == 0
+            if not ok and not a["u"].GetWindowRect(hwnd, ct.byref(r)):
                 return None
             w, h = r.right - r.left, r.bottom - r.top
             return (r.left, r.top, w, h) if w > 0 and h > 0 else None
         except Exception:
             return None
 
-    @staticmethod
-    def place(hwnd, x, y, w, h):
-        try:
-            import ctypes
-            # SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOOWNERZORDER | SWP_NOSENDCHANGING-free (keeps layout updates)
-            ctypes.windll.user32.SetWindowPos(hwnd, 0, int(round(x)), int(round(y)),
-                                              int(round(w)), int(round(h)), 0x0004 | 0x0010 | 0x0200)
-        except Exception:
-            pass
+    @classmethod
+    def place(cls, hwnd, x, y, w, h, show=False):
+        a = cls.api()
+        if a and hwnd:
+            try:          # NOZORDER | NOACTIVATE | NOOWNERZORDER (| SHOWWINDOW)
+                a["u"].SetWindowPos(hwnd, None, int(round(x)), int(round(y)), int(round(w)), int(round(h)),
+                                    0x0004 | 0x0010 | 0x0200 | (0x0040 if show else 0))
+            except Exception:
+                pass
 
-    @staticmethod
-    def transitions(hwnd, enabled):
+    @classmethod
+    def work_area(cls):
+        """The usable part (minus taskbar) of the screen the mouse is on."""
+        a = cls.api()
+        if not a:
+            return None
+        try:
+            ct, w, u = a["ct"], a["w"], a["u"]
+            pt = w.POINT()
+            u.GetCursorPos(ct.byref(pt))
+            mon = u.MonitorFromPoint(pt, 2)           # nearest monitor
+            mi = a["MI"]()
+            mi.cbSize = ct.sizeof(mi)
+            if not u.GetMonitorInfoW(mon, ct.byref(mi)):
+                return None
+            r = mi.rcWork
+            return (r.left, r.top, r.right - r.left, r.bottom - r.top)
+        except Exception:
+            return None
+
+    @classmethod
+    def center(cls, hwnd):
+        """Moves a window to the middle of the screen the mouse is on (keeps its size)."""
+        r, wa = cls.rect(hwnd), cls.work_area()
+        if not (r and wa):
+            return False
+        w, h = min(r[2], wa[2]), min(r[3], wa[3])
+        cls.place(hwnd, wa[0] + (wa[2] - w) / 2, wa[1] + (wa[3] - h) / 2, w, h)
+        return True
+
+    @classmethod
+    def transitions(cls, hwnd, enabled):
         """Turns Windows' own pop-in animation off while we run ours (so they don't fight)."""
-        if sys.platform != "win32" or not hwnd:
-            return
-        try:
-            import ctypes
-            off = ctypes.c_int(0 if enabled else 1)
-            ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, 3, ctypes.byref(off), 4)
-        except Exception:
-            pass
+        a = cls.api()
+        if a and hwnd:
+            try:
+                v = a["ct"].c_int(0 if enabled else 1)
+                a["d"].DwmSetWindowAttribute(hwnd, 3, a["ct"].byref(v), 4)
+            except Exception:
+                pass
 
 
-def _hwnd_of(win):
+def _hwnd_of(win, title=None):
+    """Window handle of a pywebview window: asked from Windows by title first (reliable),
+    then from pywebview itself."""
+    if title:
+        hs = WinFx.find(title)
+        if hs:
+            return hs[0]
     try:
         h = win.native.Handle
         return h.ToInt64() if hasattr(h, "ToInt64") else int(h)
@@ -374,6 +464,60 @@ class Api:
 
     def thumbs(self, ids):
         return load_thumbs(ids)
+
+    # ---- "My list": ideas the designer saved, with a status and notes
+    _saved_lock = threading.Lock()
+
+    @staticmethod
+    def _read_saved():
+        try:
+            with open(SAVED_PATH, encoding="utf-8") as f:
+                data = json.load(f)
+            return data if isinstance(data, list) else []
+        except Exception:
+            return []
+
+    @staticmethod
+    def _write_saved(items):
+        os.makedirs(DATA_HOME, exist_ok=True)
+        tmp = SAVED_PATH + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(items, f, indent=1)
+        os.replace(tmp, SAVED_PATH)
+
+    def get_saved(self):
+        return self._read_saved()
+
+    def save_idea(self, idea):
+        if not isinstance(idea, dict) or not idea.get("theme"):
+            return self._read_saved()
+        keep = ("theme", "type", "image", "image_id", "price", "score", "colors", "reasons", "kind", "examples")
+        entry = {k: idea.get(k) for k in keep}
+        entry["key"] = f"{idea.get('theme')}|{idea.get('type')}".lower()
+        entry["status"], entry["notes"] = "todo", ""
+        entry["added"] = datetime.now().isoformat(timespec="seconds")
+        with self._saved_lock:
+            items = [x for x in self._read_saved() if x.get("key") != entry["key"]]
+            items.insert(0, entry)
+            self._write_saved(items)
+            return items
+
+    def update_saved(self, key, patch):
+        with self._saved_lock:
+            items = self._read_saved()
+            for x in items:
+                if x.get("key") == key:
+                    for k in ("status", "notes"):
+                        if k in (patch or {}):
+                            x[k] = str(patch[k])[:4000]
+            self._write_saved(items)
+            return items
+
+    def remove_saved(self, key):
+        with self._saved_lock:
+            items = [x for x in self._read_saved() if x.get("key") != key]
+            self._write_saved(items)
+            return items
 
     def momentum(self):
         s = self._app.settings
@@ -881,14 +1025,24 @@ class TrendApp:
             pass
 
     def _splash_loaded(self):
+        """The loading window was created hidden; now that its page has drawn, put it in the
+        middle of the screen and show it (so it never appears as an empty box in a corner)."""
         close_native_splash()                       # only matters for older builds that still had one
-        self.splash_hwnd = _hwnd_of(self.splash)
-        try:
-            import ctypes
-            pref = ctypes.c_int(2)                  # rounded corners on Windows 11
-            ctypes.windll.dwmapi.DwmSetWindowAttribute(self.splash_hwnd, 33, ctypes.byref(pref), 4)
-        except Exception:
-            pass
+        self.splash_hwnd = h = _hwnd_of(self.splash, SPLASH_TITLE)
+        a = WinFx.api()
+        if a and h:
+            try:
+                pref = a["ct"].c_int(2)             # rounded corners on Windows 11
+                a["d"].DwmSetWindowAttribute(h, 33, a["ct"].byref(pref), 4)
+            except Exception:
+                pass
+        centered = WinFx.center(h)
+        write_log(f"startup: loading window hwnd={h} centered={centered} rect={WinFx.rect(h)}")
+        if not self.revealed:
+            try:
+                self.splash.show()
+            except Exception:
+                pass
         self.splash_progress(18, "Starting…")
 
     def reveal(self):
@@ -956,7 +1110,9 @@ class TrendApp:
         simpler cross-fade runs instead)."""
         start = WinFx.rect(sp_hwnd)
         end = WinFx.rect(main, visible_frame=True)
-        if not (start and end and WinFx.layered(main, True)):
+        layered = bool(start and end) and WinFx.layered(main, True)
+        write_log(f"reveal: splash={sp_hwnd} main={main} start={start} end={end} layered={layered}")
+        if not layered:
             return False
         WinFx.alpha(main, 0)                        # the app stays invisible while the box grows
         WinFx.transitions(main, False)
@@ -1013,13 +1169,17 @@ class TrendApp:
 
     def on_started(self):
         """Runs once the window exists."""
-        try:
-            native = self.window.native
-            hwnd = native.Handle.ToInt64() if hasattr(native.Handle, "ToInt64") else int(native.Handle)
-            self.hwnd = hwnd
-            dark_titlebar(hwnd, self.settings.get("theme", "midnight"))
-        except Exception:
-            pass
+        hwnd = None
+        for _ in range(40):                         # the window may take a moment to exist
+            hwnd = _hwnd_of(self.window, APP_NAME)
+            if hwnd:
+                break
+            time.sleep(0.05)
+        self.hwnd = hwnd
+        dark_titlebar(hwnd, self.settings.get("theme", "midnight"))
+        if not self.hidden:
+            WinFx.center(hwnd)                      # open in the middle of the screen you're using
+        write_log(f"startup: app window hwnd={hwnd} rect={WinFx.rect(hwnd)}")
         if self.splash is None:
             close_native_splash()
         threading.Thread(target=self._reveal_watchdog, daemon=True).start()
@@ -1048,8 +1208,8 @@ class TrendApp:
             with open(os.path.join(APP_DIR, "ui", "splash.html"), encoding="utf-8") as f:
                 sp = f.read().replace('<html lang="en">', f'<html lang="en" data-theme="{theme}">', 1)
             self.splash = webview.create_window(
-                APP_NAME, html=sp, width=520, height=320, resizable=False, frameless=True,
-                on_top=True, background_color=THEMES[theme][0], text_select=False)
+                SPLASH_TITLE, html=sp, width=520, height=320, resizable=False, frameless=True,
+                on_top=True, background_color=THEMES[theme][0], text_select=False, hidden=True)
             self.splash.events.loaded += self._splash_loaded
         webview.start(self.on_started, debug=False, private_mode=False,
                       storage_path=os.path.join(DATA_HOME, "webview"))

@@ -64,6 +64,7 @@ THEMES = {
     "sunset": ("#14100d", "#1a1511", True),
     "graphite": ("#111111", "#161616", True),
     "daylight": ("#f4f5f8", "#ffffff", False),
+    "blossom": ("#fdf4f8", "#fff8fb", False),
 }
 
 DATA_HOME = os.path.join(os.environ.get("LOCALAPPDATA") or os.path.expanduser("~"), "UGC Trend Finder")

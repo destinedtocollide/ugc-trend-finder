@@ -166,6 +166,59 @@ def dark_titlebar(hwnd, theme="midnight"):
         pass
 
 
+class WinFx:
+    """Whole-window fades for the startup hand-off (Windows only; silently does nothing elsewhere)."""
+    GWL_EXSTYLE, WS_EX_LAYERED, LWA_ALPHA = -20, 0x80000, 0x2
+
+    @staticmethod
+    def _u32():
+        import ctypes
+        return ctypes.windll.user32 if sys.platform == "win32" else None
+
+    @classmethod
+    def layered(cls, hwnd, on):
+        u = cls._u32()
+        if not u or not hwnd:
+            return False
+        try:
+            ex = u.GetWindowLongW(hwnd, cls.GWL_EXSTYLE)
+            u.SetWindowLongW(hwnd, cls.GWL_EXSTYLE, (ex | cls.WS_EX_LAYERED) if on else (ex & ~cls.WS_EX_LAYERED))
+            if not on:                              # Windows asks for a repaint after un-layering
+                u.RedrawWindow(hwnd, None, None, 0x1 | 0x4 | 0x80 | 0x400)
+            return True
+        except Exception:
+            return False
+
+    @classmethod
+    def alpha(cls, hwnd, a):
+        u = cls._u32()
+        if u and hwnd:
+            try:
+                u.SetLayeredWindowAttributes(hwnd, 0, max(0, min(255, int(a))), cls.LWA_ALPHA)
+            except Exception:
+                pass
+
+    @staticmethod
+    def transitions(hwnd, enabled):
+        """Turns Windows' own pop-in animation off while we run ours (so they don't fight)."""
+        if sys.platform != "win32" or not hwnd:
+            return
+        try:
+            import ctypes
+            off = ctypes.c_int(0 if enabled else 1)
+            ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, 3, ctypes.byref(off), 4)
+        except Exception:
+            pass
+
+
+def _hwnd_of(win):
+    try:
+        h = win.native.Handle
+        return h.ToInt64() if hasattr(h, "ToInt64") else int(h)
+    except Exception:
+        return None
+
+
 def create_desktop_shortcut():
     if sys.platform != "win32":
         raise RuntimeError("Desktop shortcuts can only be made on Windows.")
@@ -790,35 +843,69 @@ class TrendApp:
             pass
 
     def _splash_loaded(self):
-        close_native_splash()                       # the animated window takes over from the static image
+        close_native_splash()                       # only matters for older builds that still had one
+        self.splash_hwnd = _hwnd_of(self.splash)
         try:
-            hwnd = self.splash.native.Handle.ToInt64()
             import ctypes
             pref = ctypes.c_int(2)                  # rounded corners on Windows 11
-            ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, 33, ctypes.byref(pref), 4)
+            ctypes.windll.dwmapi.DwmSetWindowAttribute(self.splash_hwnd, 33, ctypes.byref(pref), 4)
         except Exception:
             pass
         self.splash_progress(18, "Starting…")
 
     def reveal(self):
-        """Loading finished: fill the bar, then swap the loading window for the app."""
+        """Loading finished: fill the bar, then cross-fade from the loading window into the app.
+
+        The app window starts fully transparent; over ~0.4 s it fades in (its content zooms
+        up into place) while the loading window swells and fades out, so it reads as the
+        small window opening up into the big one instead of one window popping in."""
         with self.lock:
             if self.revealed:
                 return
             self.revealed = True
-        if self.splash is not None:
+        sp, sp_hwnd = self.splash, getattr(self, "splash_hwnd", None)
+        if sp is not None:
             self.splash_progress(100, "Ready")
-            time.sleep(0.55)
-        if not self.hidden:
+            time.sleep(0.5)                         # let the bar finish filling
+        main = getattr(self, "hwnd", None)
+        if self.hidden:                             # started in the tray: nothing to animate
+            self.emit_raw({"type": "reveal"})
+        else:
+            fade_main = WinFx.layered(main, True)
+            if fade_main:
+                WinFx.alpha(main, 0)
+                WinFx.transitions(main, False)
+            fade_sp = sp is not None and WinFx.layered(sp_hwnd, True)
+            if fade_sp:
+                WinFx.alpha(sp_hwnd, 255)
             try:
                 self.window.show()
             except Exception:
                 pass
-        self.emit_raw({"type": "reveal"})
-        if self.splash is not None:
-            time.sleep(0.12)
+            if sp is not None:
+                try:
+                    sp.evaluate_js("document.body.classList.add('leaving')")
+                except Exception:
+                    pass
+            self.emit_raw({"type": "reveal"})
+            dur, t0 = 0.42, time.perf_counter()
+            while fade_main or fade_sp:
+                t = min(1.0, (time.perf_counter() - t0) / dur)
+                e = 1 - (1 - t) ** 3                # ease-out
+                if fade_main:
+                    WinFx.alpha(main, 255 * e)
+                if fade_sp:
+                    WinFx.alpha(sp_hwnd, 255 * (1 - min(1.0, t * 1.35)))
+                if t >= 1:
+                    break
+                time.sleep(1 / 120)
+            if fade_main:
+                WinFx.alpha(main, 255)
+                WinFx.layered(main, False)          # back to a normal window (no extra redraw cost)
+                WinFx.transitions(main, True)       # keep Windows' usual minimize/restore animations
+        if sp is not None:
             try:
-                self.splash.destroy()
+                sp.destroy()
             except Exception:
                 pass
             self.splash = None

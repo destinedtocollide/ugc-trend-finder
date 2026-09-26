@@ -352,6 +352,16 @@ td.num-c { color: var(--muted); font-variant-numeric: tabular-nums; width: 40px;
 .toast.ok { border-left: 3px solid var(--ok); }
 .toast.err { border-left: 3px solid var(--danger); }
 
+/* launched with the separate loading window: the in-page splash isn't needed, the app fades in */
+[data-launch="managed"] #splash { display: none; }
+[data-launch="managed"] .app { opacity: 0; transform: scale(.985); }
+[data-launch="managed"] .app.revealed { opacity: 1; transform: none; transition: opacity .5s ease, transform .6s cubic-bezier(.2,.8,.2,1); }
+.app.revealed .side { animation: side-in .55s cubic-bezier(.2,.8,.2,1) both; }
+.app.revealed .header { animation: rise .5s .06s cubic-bezier(.2,.8,.2,1) both; }
+.app.revealed .scroll { animation: rise .55s .12s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes side-in { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: none; } }
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
 /* splash */
 #splash { position: fixed; inset: 0; z-index: 100; background: var(--bg); display: grid; place-items: center; transition: opacity .45s ease, visibility .45s; }
 #splash.hide { opacity: 0; visibility: hidden; }
@@ -579,7 +589,7 @@ function modalNotes(titleText, text, notes) {
 }
 function lightbox(item) {
   const o = $("#overlay");
-  o.innerHTML = `<div class="lightbox">${imgBox(item.thumb, "")}<div class="lb-b"><div><b>${esc(item.name)}</b>
+  o.innerHTML = `<div class="lightbox">${imgBox(item.thumb, "", itemId(item))}<div class="lb-b"><div><b>${esc(item.name)}</b>
     <span>${esc(item.type)} · ${esc(item.price)}${item.creator ? " · by " + esc(item.creator) : ""}</span></div>
     <button class="btn primary sm" id="lb-open">${ICON.ext} View on Roblox</button></div></div>`;
   o.classList.add("show");
@@ -590,15 +600,61 @@ function lightbox(item) {
   o.onclick = e => { if (e.target === o) close(); };
   $("#lb-open").onclick = () => call("open_url", item.url);
 }
-function imgBox(url, cls = "") {
-  return `<div class="img ${cls}">${url ? `<img src="${esc(url)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : ""}<div class="ph">${ICON.img}</div></div>`;
+/* Item pictures: shown straight from Roblox when the scan has a link; if there is no link
+   (older scans) or it no longer works, the app fetches the picture itself and keeps a copy. */
+const THUMBS = {};
+const thumbQueue = new Map();
+let thumbTimer = null;
+function itemId(it) {
+  if (!it) return "";
+  if (it.id) return String(it.id);
+  const m = String(it.url || "").match(/catalog\/(\d+)/);
+  return m ? m[1] : "";
+}
+function imgBox(url, cls = "", id = "") {
+  const src = url || (id && THUMBS[id]) || "";
+  return `<div class="img ${cls}" data-id="${esc(id)}">${src ? `<img src="${esc(src)}" alt="" referrerpolicy="no-referrer">` : ""}<div class="ph">${ICON.img}</div></div>`;
+}
+function setPicture(box, uri) {
+  box.querySelector("img")?.remove();
+  const im = document.createElement("img");
+  im.alt = ""; im.dataset.w = 1; im.dataset.local = 1;
+  im.onload = () => im.classList.add("loaded");
+  im.src = uri;
+  box.prepend(im);
+}
+function needPicture(box) {
+  const id = box.dataset.id;
+  if (!id || box.dataset.asked) return;
+  if (THUMBS[id]) { setPicture(box, THUMBS[id]); return; }
+  box.dataset.asked = 1;
+  if (!thumbQueue.has(id)) thumbQueue.set(id, []);
+  thumbQueue.get(id).push(box);
+  clearTimeout(thumbTimer);
+  thumbTimer = setTimeout(flushThumbs, 40);
+}
+async function flushThumbs() {
+  const batch = [...thumbQueue.entries()];
+  thumbQueue.clear();
+  for (let i = 0; i < batch.length; i += 24) {
+    const part = batch.slice(i, i + 24);
+    const got = await call("thumbs", part.map(([id]) => id)) || {};
+    for (const [id, boxes] of part) {
+      if (!got[id]) continue;
+      THUMBS[id] = got[id];
+      boxes.forEach(b => { if (b.isConnected) setPicture(b, got[id]); });
+    }
+  }
 }
 function wireImages(root) {
-  root.querySelectorAll(".img img:not([data-w])").forEach(im => {
+  root.querySelectorAll(".img").forEach(box => {
+    const im = box.querySelector("img");
+    if (!im) { needPicture(box); return; }
+    if (im.dataset.w) return;
     im.dataset.w = 1;
     if (im.complete && im.naturalWidth) im.classList.add("loaded");
     im.onload = () => im.classList.add("loaded");
-    im.onerror = () => im.remove();
+    im.onerror = () => { im.remove(); needPicture(box); };
   });
 }
 function chips(id, options, value, disabled = false) {
@@ -872,6 +928,11 @@ function onEvent(ev) {
     case "update": showUpdate(ev.info); break;
     case "update_progress": updateProgress(ev); break;
     case "toast": toast(ev.msg, ev.kind || ""); break;
+    case "reveal":
+      $(".app").classList.add("revealed");
+      setTimeout(() => { $(".app").style.transform = "none"; }, 700);
+      revealResolve && revealResolve();
+      break;
   }
 }
 
@@ -891,7 +952,7 @@ function renderIdeas() {
     <div class="stat"><span>Ideas</span><b>${ideas.length}</b></div>
   </div>
   ${top.length ? `<div class="sec-title"><h2>Selling best right now</h2><span>Top UGC bestsellers from this scan. Click one for a closer look.</span></div>
-  <div class="strip" id="strip">${top.map((it, i) => `<div class="item" data-i="${i}">${imgBox(it.thumb)}<span class="rank">#${i + 1}</span>
+  <div class="strip" id="strip">${top.map((it, i) => `<div class="item" data-i="${i}">${imgBox(it.thumb, "", itemId(it))}<span class="rank">#${i + 1}</span>
     <div class="meta"><b title="${esc(it.name)}">${esc(it.name)}</b><span>${esc(it.type)} · ${esc(it.price)}</span></div></div>`).join("")}</div>` : ""}
   <div class="sec-title"><h2>Ideas to make</h2><span>Ranked by demand vs. competition</span></div>
   ${ideas.length ? `<div class="ideas">${ideas.map(ideaCard).join("")}</div>`
@@ -913,7 +974,7 @@ function ideaCard(idea, i) {
   const colors = (idea.colors || []).map(c => `<span class="sw-item"><i style="background:${SWATCH[c] || "#888"}"></i>${esc(c)}</span>`).join("") || "—";
   return `<article class="idea" data-i="${i}">
     <div class="idea-top">
-      ${imgBox(idea.image || idea.examples?.[0]?.thumb)}
+      ${imgBox(idea.image || idea.examples?.[0]?.thumb, "", itemId((idea.examples || []).find(e => e.thumb && e.thumb === idea.image) || idea.examples?.[0]))}
       <div class="idea-h">
         <div class="t"><span class="num">${i + 1}</span><h3>${esc(title(idea.theme))} <span>·</span> ${esc(idea.type)}</h3>
           <div class="score"><b>${idea.score}</b><span>SCORE</span></div></div>
@@ -925,7 +986,7 @@ function ideaCard(idea, i) {
       <div class="lbl">Why</div>
       <ul class="reasons">${(idea.reasons || []).map(r => `<li>${esc(r)}</li>`).join("")}</ul>
       ${idea.examples?.length ? `<div class="lbl">Look at these for reference</div><div class="examples">${idea.examples.map((ex, j) =>
-        `<div class="ex" data-j="${j}">${imgBox(ex.thumb)}<div><b>${esc(ex.name)}</b><span>${esc(ex.type)} · ${esc(ex.price)}</span></div></div>`).join("")}</div>` : ""}
+        `<div class="ex" data-j="${j}">${imgBox(ex.thumb, "", itemId(ex))}<div><b>${esc(ex.name)}</b><span>${esc(ex.type)} · ${esc(ex.price)}</span></div></div>`).join("")}</div>` : ""}
       <div class="idea-f"><button class="btn sm b-search">${ICON.search} Search “${esc(idea.theme)}” on Roblox</button></div>
     </div></article>`;
 }
@@ -1127,11 +1188,21 @@ function applyTheme(key) {
 
 /* ---------- startup screen ---------- */
 const bootStart = Date.now();
+const MANAGED = document.documentElement.dataset.launch === "managed";
+let revealResolve = null;
+const revealed = new Promise(r => { revealResolve = r; });
 function splashStep(pct, text) {
   const b = $("#sp-bar"); if (b) b.style.width = pct + "%";
   const t = $("#sp-step"); if (t && text) t.textContent = text;
+  if (MANAGED && api) call("boot_progress", pct, text || "");
 }
 async function splashDone() {
+  if (MANAGED) {
+    call("boot_done");
+    await Promise.race([revealed, new Promise(r => setTimeout(r, 30000))]);
+    await new Promise(r => setTimeout(r, 650));        // let the fade-in finish before any popups
+    return;
+  }
   splashStep(100, "Ready");
   const wait = Math.max(0, 1400 - (Date.now() - bootStart));
   await new Promise(r => setTimeout(r, wait + 250));

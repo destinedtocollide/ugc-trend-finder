@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>UGC Trend Finder</title>
+<style>
+/* Same layout as the static startup image (splash.png, 520x320) so the swap is seamless. */
+:root, [data-theme="midnight"] { --bg:#0f1115; --edge:#262a33; --ink:#e8eaee; --muted:#7f8795; --track:#232731; --a1:#4a86f0; --a2:#6d9ff6; --g1:#5b95f5; --g2:#2f68d8; --glow:74,134,240; --on:#fff; }
+[data-theme="sakura"]  { --bg:#151015; --edge:#332532; --ink:#f7ecf2; --muted:#a3879b; --track:#2e2130; --a1:#ff5fa2; --a2:#ff8cc0; --g1:#ff8cc0; --g2:#f0458f; --glow:255,95,162; }
+[data-theme="violet"]  { --bg:#100f16; --edge:#2a2738; --ink:#ece9f6; --muted:#8a84a3; --track:#262335; --a1:#8b6cff; --a2:#a78fff; --g1:#a78fff; --g2:#7657f0; --glow:139,108,255; }
+[data-theme="emerald"] { --bg:#0d1311; --edge:#22302a; --ink:#e6efe9; --muted:#7b9186; --track:#1f2b25; --a1:#2fbf7f; --a2:#55d69b; --g1:#55d69b; --g2:#23a86c; --glow:47,191,127; }
+[data-theme="sunset"]  { --bg:#14100d; --edge:#33291f; --ink:#f4ede7; --muted:#9e8c7e; --track:#2e241d; --a1:#ff8a3d; --a2:#ffa66b; --g1:#ffa66b; --g2:#f07424; --glow:255,138,61; }
+[data-theme="graphite"]{ --bg:#111111; --edge:#2a2a2a; --ink:#ededed; --muted:#8a8a8a; --track:#272727; --a1:#d8d8d8; --a2:#ffffff; --g1:#f0f0f0; --g2:#bdbdbd; --glow:232,232,232; --on:#111; }
+[data-theme="daylight"]{ --bg:#f4f5f8; --edge:#dfe3ea; --ink:#1a1d23; --muted:#7a828f; --track:#e3e7ee; --a1:#3b7cf0; --a2:#5a93f5; --g1:#5a93f5; --g2:#2f6de0; --glow:59,124,240; }
+* { box-sizing: border-box; margin: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); user-select: none; cursor: default; }
+body { position: relative; font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; color: var(--ink);
+  border: 2px solid var(--edge); -webkit-font-smoothing: antialiased; }
+.logo { position: absolute; left: 210px; top: 50px; width: 96px; height: 96px; }
+.logo svg { width: 96px; height: 96px; display: block; filter: drop-shadow(0 10px 26px rgba(var(--glow), .0)); animation: glow 2.4s ease-in-out infinite; }
+@keyframes glow { 0%,100% { filter: drop-shadow(0 8px 22px rgba(var(--glow), .18)); } 50% { filter: drop-shadow(0 10px 30px rgba(var(--glow), .42)); } }
+.shine { position: absolute; inset: 2px; border-radius: 21px; overflow: hidden; pointer-events: none; }
+.shine::after { content: ""; position: absolute; top: -20%; bottom: -20%; width: 40%; left: -60%;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,.28), transparent); animation: sweep 2.4s ease-in-out infinite; }
+@keyframes sweep { 0% { left: -60%; } 55%, 100% { left: 130%; } }
+.name { position: absolute; left: 0; right: 0; top: 160px; text-align: center; font-weight: 700; font-size: 26px; line-height: 34px; letter-spacing: -.005em; }
+.step { position: absolute; left: 0; right: 0; top: 200px; text-align: center; font-size: 14px; line-height: 20px; color: var(--muted);
+  font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; transition: opacity .18s; }
+.bar { position: absolute; left: 138px; top: 242px; width: 240px; height: 6px; border-radius: 99px; background: var(--track); overflow: hidden; }
+.bar i { position: absolute; left: 0; top: 0; bottom: 0; width: 12%; border-radius: 99px; background: linear-gradient(90deg, var(--a1), var(--a2)); overflow: hidden; }
+.bar i::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.4), transparent);
+  transform: translateX(-100%); animation: shimmer 1.1s linear infinite; }
+@keyframes shimmer { to { transform: translateX(100%); } }
+.pct { position: absolute; left: 0; right: 0; top: 260px; text-align: center; font-size: 11.5px; color: var(--muted); opacity: .75;
+  font-variant-numeric: tabular-nums; font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; }
+body.done .logo { animation: pop .45s cubic-bezier(.2,.9,.3,1.25); }
+@keyframes pop { 40% { transform: scale(1.08); } 100% { transform: scale(1); } }
+</style>
+</head>
+<body>
+  <div class="logo">
+    <svg viewBox="0 0 96 96">
+      <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--g1)"/><stop offset="1" stop-color="var(--g2)"/></linearGradient></defs>
+      <rect x="2.25" y="2.25" width="91.5" height="91.5" rx="21.6" fill="url(#g)"/>
+      <g fill="none" stroke="var(--on)" stroke-width="8.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20.2 65.6 L39.4 43.1 L55.3 55.3 L76.4 30.9"/>
+        <path d="M57.2 30.9 H76.4 V50.2"/>
+      </g>
+    </svg>
+    <div class="shine"></div>
+  </div>
+  <div class="name">UGC Trend Finder</div>
+  <div class="step" id="step">Starting…</div>
+  <div class="bar"><i id="bar"></i></div>
+  <div class="pct" id="pct"></div>
+<script>
+// The app reports real progress with setP(); in between, the bar keeps creeping forward
+// so it never looks frozen, but it never overtakes the real progress by much.
+let target = 12, shown = 12, done = false;
+const bar = document.getElementById("bar"), step = document.getElementById("step"), pct = document.getElementById("pct");
+window.setP = (p, text) => {
+  target = Math.max(target, Math.min(100, p));
+  if (text && step.textContent !== text) {
+    step.style.opacity = 0;
+    setTimeout(() => { step.textContent = text; step.style.opacity = 1; }, 150);
+  }
+  if (p >= 100 && !done) { done = true; document.body.classList.add("done"); }
+};
+function frame() {
+  if (!done && target < 94) target += 0.035;           // gentle creep while waiting
+  shown += (target - shown) * (done ? 0.22 : 0.07);
+  if (Math.abs(target - shown) < 0.05) shown = target;
+  bar.style.width = shown.toFixed(2) + "%";
+  pct.textContent = Math.round(shown) + "%";
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

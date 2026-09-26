@@ -623,8 +623,14 @@ class TrendApp:
         import webview
         start_hidden = "--tray" in sys.argv          # started with Windows: stay in the tray
         self.hidden = start_hidden
+        # The page is handed to the window directly instead of through pywebview's local
+        # web server. That server uses a fixed default port, so another pywebview app that
+        # is already running (e.g. a different tracker) would answer instead and show its
+        # own interface in this window.
+        with open(os.path.join(APP_DIR, "ui", "index.html"), encoding="utf-8") as f:
+            page = f.read()
         self.window = webview.create_window(
-            APP_NAME, os.path.join(APP_DIR, "ui", "index.html"), js_api=Api(self),
+            APP_NAME, html=page, js_api=Api(self),
             width=1280, height=840, min_size=(960, 640), background_color=BG, text_select=False,
             hidden=start_hidden)
         self.window.events.closing += self.on_closing

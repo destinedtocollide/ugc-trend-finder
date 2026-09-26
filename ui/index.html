@@ -428,12 +428,90 @@ td.num-c { color: var(--muted); font-variant-numeric: tabular-nums; width: 40px;
   border: 1px solid var(--line2); color: var(--ink2); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; user-select: text; }
 .flex { display: flex; gap: 8px; align-items: center; }
 
+/* ---------- momentum charts ---------- */
+:root { --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; }
+[data-theme="daylight"] { --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300; }
+.mo-card { padding: 16px 20px 18px; }
+.actions #mo-kind { flex-wrap: nowrap; }
+.mo-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.mo-top .when { flex: 1; min-width: 180px; }
+.mo-top .when b { display: block; font: 600 16px/1.3 var(--font-d); font-variant-numeric: tabular-nums; }
+.mo-top .when span { color: var(--muted); font-size: 12.5px; }
+.mo-top .chip { height: 30px; padding: 0 12px; font-size: 12.5px; }
+.mo-legend { display: flex; flex-wrap: wrap; gap: 6px 8px; margin-bottom: 8px; min-height: 28px; }
+.mo-leg { display: inline-flex; align-items: center; gap: 7px; height: 28px; padding: 0 6px 0 10px; border-radius: 99px; background: var(--soft);
+  color: var(--ink); font-size: 12.5px; border: 0; cursor: pointer; max-width: 260px; }
+.mo-leg i { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.mo-leg span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mo-leg u { text-decoration: none; color: var(--muted); width: 18px; height: 18px; display: grid; place-items: center; border-radius: 99px; font-size: 14px; line-height: 1; }
+.mo-leg:hover u { background: var(--soft2); color: var(--ink); }
+.mo-hint { color: var(--muted); font-size: 12.5px; align-self: center; }
+.mo-chart { position: relative; height: 310px; touch-action: none; cursor: crosshair; }
+.mo-chart svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.mo-chart .gl { stroke: var(--line); stroke-width: 1; }
+.mo-chart .base { stroke: var(--line2); stroke-width: 1; }
+.mo-chart text { fill: var(--muted); font: 11.5px var(--font); font-variant-numeric: tabular-nums; }
+.mo-chart text.dl { fill: var(--ink2); font-size: 12px; font-weight: 600; }
+.mo-chart .ln { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.mo-chart .ln.dim { opacity: .28; }
+.mo-chart .future { fill: var(--card); opacity: .62; }
+.mo-chart .cur { stroke: var(--ink2); stroke-width: 1; }
+.mo-chart .dot { stroke: var(--card); stroke-width: 2; }
+.mo-tip { position: absolute; top: 8px; pointer-events: none; background: var(--card2); border: 1px solid var(--line2); border-radius: 10px;
+  padding: 9px 11px; min-width: 190px; max-width: 280px; box-shadow: 0 10px 28px var(--shadow); font-size: 12.5px; transition: left .12s ease-out; }
+.mo-tip .h { color: var(--muted); margin-bottom: 5px; font-size: 12px; }
+.mo-tip .r { display: grid; grid-template-columns: 10px 1fr auto auto; align-items: center; gap: 7px; padding: 2px 0; }
+.mo-tip .r i { width: 10px; height: 10px; border-radius: 3px; }
+.mo-tip .r > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink2); }
+.mo-tip .r b { font-variant-numeric: tabular-nums; color: var(--ink); }
+.mo-tip .r em { font-style: normal; font-size: 11.5px; min-width: 52px; text-align: right; font-variant-numeric: tabular-nums; }
+.mo-slider { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
+.mo-play { width: 32px; height: 32px; border-radius: 99px; border: 1px solid var(--line2); background: var(--soft); display: grid; place-items: center; cursor: pointer; flex: none; }
+.mo-play:hover { background: var(--soft2); }
+.mo-play svg { width: 14px; height: 14px; }
+.mo-range { flex: 1; -webkit-appearance: none; appearance: none; height: 6px; border-radius: 99px; outline: none; cursor: pointer;
+  background: linear-gradient(90deg, var(--accent) var(--fill, 100%), var(--soft2) var(--fill, 100%)); }
+.mo-range::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 99px; background: var(--card);
+  border: 3px solid var(--accent); box-shadow: 0 2px 8px var(--shadow); transition: transform .12s; }
+.mo-range:hover::-webkit-slider-thumb, .mo-range:active::-webkit-slider-thumb { transform: scale(1.15); }
+.mo-range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px rgba(var(--accent-rgb), .3); }
+.mo-pos { color: var(--muted); font-size: 12px; min-width: 92px; text-align: right; font-variant-numeric: tabular-nums; }
+.mo-cols { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; margin-top: 14px; }
+.mo-cols .card + .card { margin-top: 0; }
+.mo-cols .card-h { display: flex; align-items: center; gap: 8px; }
+.mo-cols .card-h small { text-transform: none; letter-spacing: 0; font-weight: 400; margin-left: auto; }
+.mo-list { padding: 8px 10px 10px; }
+.mo-row { display: grid; grid-template-columns: auto minmax(0,1fr) 84px 64px 70px; align-items: center; gap: 10px; padding: 7px 10px;
+  border-radius: 9px; cursor: pointer; border: 1px solid transparent; }
+.mo-row:hover { background: var(--soft); }
+.mo-row.on { border-color: var(--line2); background: var(--card2); }
+.mo-row .mk { width: 12px; height: 12px; border-radius: 4px; border: 1.5px solid var(--line2); }
+.mo-row .img { width: 34px; height: 34px; border-radius: 8px; flex: none; }
+.mo-row .img .ph svg { width: 14px; height: 14px; }
+.mo-row .nm { min-width: 0; }
+.mo-row .nm b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.mo-row .nm span { display: block; color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mo-row .val { text-align: right; font-variant-numeric: tabular-nums; }
+.mo-row .dl { text-align: right; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.mo-row svg { width: 84px; height: 26px; display: block; }
+.mo-row svg path { fill: none; stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
+.mo-none { color: var(--muted); padding: 22px 12px; text-align: center; font-size: 13px; }
+.mo-note { display: flex; gap: 16px; align-items: center; padding: 18px 20px; }
+.mo-note .ic { width: 44px; height: 44px; border-radius: 12px; background: var(--accent-dim); color: var(--accent2); display: grid; place-items: center; flex: none; }
+.mo-note .ic svg { width: 22px; height: 22px; }
+.mo-note div { flex: 1; }
+.mo-note b { display: block; font: 600 15px var(--font-d); }
+.mo-note p { margin: 2px 0 0; color: var(--ink2); }
+.mo-table { margin-top: 14px; max-height: 280px; overflow: auto; border-top: 1px solid var(--line); }
+.mo-table table { font-size: 12.5px; }
+
 @media (max-width: 1180px) {
   .stats4, .stats-row { grid-template-columns: repeat(2, minmax(0,1fr)); }
 }
 @media (max-width: 1080px) {
   .app { grid-template-columns: 208px 1fr; }
   .ideas { grid-template-columns: 1fr; }
+  .mo-cols { grid-template-columns: 1fr; }
   .page { padding: 18px 20px 28px; }
   .header { padding: 18px 20px 14px; }
 }
@@ -483,6 +561,7 @@ td.num-c { color: var(--muted); font-variant-numeric: tabular-nums; width: 40px;
       <section class="page" id="p-scan"></section>
       <section class="page" id="p-ideas"></section>
       <section class="page" id="p-trends"></section>
+      <section class="page" id="p-momentum"></section>
       <section class="page" id="p-history"></section>
       <section class="page" id="p-settings"></section>
       <section class="page" id="p-help"></section>
@@ -499,6 +578,10 @@ const ICON = {
   scan: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
   ideas: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1.1 2V16h5v-.2c.1-.8.5-1.5 1.1-2A6 6 0 0 0 12 3z"/></svg>',
   trends: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>',
+  momentum: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-6"/></svg>',
+  play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/></svg>',
+  stop: '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>',
+  table: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/></svg>',
   history: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
   settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
   help: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>',
@@ -514,6 +597,7 @@ const PAGES = [
   ["scan", "New scan", "Reads the Roblox bestseller, most-favorited and newest-upload lists, then works out what you could make."],
   ["ideas", "Ideas", "Themes buyers want, on item types without much competition yet."],
   ["trends", "Trending themes", "Every theme from your scan. Click one to search it on the Roblox marketplace."],
+  ["momentum", "Momentum", "How themes and items have been selling across your scans. Drag the slider to go back in time."],
   ["history", "History", "Every scan you've run. Scanning every few days shows which themes are climbing."],
   ["settings", "Settings", "Changes are saved automatically."],
   ["help", "How it works", "What the app looks at and what the scores mean."],
@@ -690,8 +774,8 @@ document.addEventListener("click", () => document.querySelectorAll(".dd.open").f
 /* ---------- navigation ---------- */
 function buildNav() {
   const mk = ([key, label]) => `<button data-p="${key}">${ICON[key]}<span>${esc(label)}</span></button>`;
-  $("#nav-top").innerHTML = PAGES.slice(0, 4).map(mk).join("");
-  $("#nav-bottom").innerHTML = PAGES.slice(4).map(mk).join("");
+  $("#nav-top").innerHTML = PAGES.slice(0, 5).map(mk).join("");
+  $("#nav-bottom").innerHTML = PAGES.slice(5).map(mk).join("");
   document.querySelectorAll(".nav button").forEach(b => b.onclick = () => show(b.dataset.p));
 }
 function show(page) {
@@ -704,7 +788,7 @@ function show(page) {
   document.querySelectorAll(".page").forEach(s => { s.classList.remove("active"); s.style.display = ""; });
   const el = document.getElementById("p-" + page);
   el.classList.add("active");
-  ({ scan: renderScan, ideas: renderIdeas, trends: renderTrends, history: renderHistory, settings: renderSettings, help: renderHelp })[page]();
+  ({ scan: renderScan, ideas: renderIdeas, trends: renderTrends, momentum: renderMomentum, history: renderHistory, settings: renderSettings, help: renderHelp })[page]();
   $("#scroll").scrollTop = 0;
 }
 
@@ -913,7 +997,7 @@ function onEvent(ev) {
     case "scan_done":
       Object.assign(r, { running: false, finished: Date.now(), done: r.total, waitUntil: 0,
         result: { ok: true, text: `Done in ${fmtDur((Date.now() - r.startTs) / 1000)}. ${ev.n_ideas} ideas are ready.` } });
-      S.currentId = ev.id; S.current = null;
+      S.currentId = ev.id; S.current = null; MOM.data = null;
       refreshState().then(() => { if (ev.go && S.page === "scan") show("ideas"); else if (S.page === "scan") renderScan(); else show(S.page); });
       toast(`Scan finished: ${ev.n_ideas} new ideas.`, "ok"); break;
     case "scan_cancelled":
@@ -1026,6 +1110,320 @@ function paintTrends() {
   }).join("") || `<tr><td colspan="8" class="muted" style="text-align:center;padding:30px">No themes match “${esc(S.search)}”.</td></tr>`;
   tb.querySelectorAll("tr.click").forEach(tr => tr.onclick = () => call("open_url", "https://www.roblox.com/catalog?Keyword=" + encodeURIComponent(tr.dataset.t)));
 }
+
+/* ---------- momentum ---------- */
+/* Every scan is a point in time. For each theme / item we chart its share of all bestseller
+   activity (how much of what's selling it accounts for). The slider scrubs through the scans. */
+const MOM = { data: null, loading: false, kind: "themes", range: "all", idx: null, table: false, play: null,
+  sel: { themes: [], items: [] }, slot: { themes: {}, items: {} } };
+const MOM_SLOTS = 6, DAY = 864e5;
+const momPts = () => MOM.data?.points || [];
+const momT = i => new Date(momPts()[i]).getTime();
+function momWindow() {
+  const n = momPts().length; if (!n) return [0, -1];
+  const span = { all: Infinity, "30": 30 * DAY, "7": 7 * DAY }[MOM.range];
+  let a = 0; const last = momT(n - 1);
+  while (a < n - 1 && last - momT(a) > span) a++;
+  return [a, n - 1];
+}
+function momFmtDate(i, long = false) {
+  const d = new Date(momPts()[i]);
+  return d.toLocaleString("en-GB", long ? { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }
+    : { day: "numeric", month: "short" });
+}
+const momPct = v => v == null ? "—" : (v >= 10 ? v.toFixed(1) : v >= 1 ? v.toFixed(2) : v.toFixed(3).replace(/0$/, "")) + "%";
+function momBase(i) {                       // the scan we compare against: ~3 days earlier (or the one before)
+  if (i <= 0) return null;
+  const want = momT(i) - 3 * DAY; let j = i - 1;
+  while (j > 0 && momT(j - 1) >= want) j--;
+  return j;
+}
+function momChange(s, i) {
+  const j = momBase(i);
+  if (j == null) {                          // only one scan so far: use "today vs this week"
+    const m = s.m[i]; return m == null ? null : { mom: m };
+  }
+  return { d: s.v[i] - s.v[j], from: j, was: s.v[j], now: s.v[i] };
+}
+function momDeltaHtml(ch) {
+  if (!ch) return `<span class="muted">—</span>`;
+  if (ch.mom != null) {
+    const m = ch.mom;
+    return m >= 1.15 ? `<span class="up">▲ ${m.toFixed(1)}×</span>` : m <= 0.87 ? `<span class="down">▼ ${m.toFixed(1)}×</span>` : `<span class="muted">${m.toFixed(1)}×</span>`;
+  }
+  if (ch.was < 0.001) return ch.now < 0.001 ? `<span class="muted">—</span>` : `<span class="up">▲ New</span>`;
+  const rel = 100 * ch.d / ch.was, a = Math.abs(rel);
+  const txt = a >= 999 ? "999+%" : (a >= 10 ? Math.round(a) : a.toFixed(1)) + "%";
+  return a < 0.5 ? `<span class="muted">same</span>` : rel > 0 ? `<span class="up">▲ ${txt}</span>` : `<span class="down">▼ ${txt}</span>`;
+}
+const momColor = (kind, key) => MOM.slot[kind][key] ? `var(--s${MOM.slot[kind][key]})` : null;
+function momToggle(key) {
+  const k = MOM.kind, sel = MOM.sel[k];
+  const at = sel.indexOf(key);
+  if (at >= 0) { sel.splice(at, 1); delete MOM.slot[k][key]; }
+  else {
+    if (sel.length >= MOM_SLOTS) { toast(`Up to ${MOM_SLOTS} lines at once. Remove one from the chart first.`); return; }
+    const used = new Set(Object.values(MOM.slot[k]));
+    let n = 1; while (used.has(n)) n++;
+    sel.push(key); MOM.slot[k][key] = n;
+  }
+  paintMomentum();
+}
+function momSeries() { return MOM.data?.[MOM.kind] || []; }
+function momDefaults() {
+  const k = MOM.kind; if (MOM.sel[k].length) return;
+  const n = momPts().length - 1;
+  momSeries().slice().sort((a, b) => b.v[n] - a.v[n]).slice(0, 4).forEach(s => {
+    MOM.sel[k].push(s.key); MOM.slot[k][s.key] = MOM.sel[k].length;
+  });
+}
+
+async function renderMomentum() {
+  const el = $("#p-momentum");
+  $("#h-actions").innerHTML = chips("mo-kind", [["themes", "Themes"], ["items", "Items"]], MOM.kind);
+  wireChips("mo-kind", v => { momStop(); MOM.kind = v; momDefaults(); paintMomentum(true); });
+  if (!MOM.data) {
+    el.innerHTML = `<div class="skel" style="height:86px;margin-bottom:14px"></div><div class="skel" style="height:420px"></div>`;
+    if (!MOM.loading) {
+      MOM.loading = true;
+      MOM.data = await call("momentum") || { points: [], themes: [], items: [] };
+      MOM.loading = false; MOM.idx = null;
+      for (const k of ["themes", "items"]) {        // drop picks that no longer exist
+        const keys = new Set((MOM.data[k] || []).map(s => s.key));
+        MOM.sel[k] = MOM.sel[k].filter(x => keys.has(x));
+        for (const x of Object.keys(MOM.slot[k])) if (!keys.has(x)) delete MOM.slot[k][x];
+      }
+      if (S.page === "momentum") renderMomentum();
+    }
+    return;
+  }
+  if (!momPts().length) {
+    el.innerHTML = emptyState(ICON.momentum, "No scans yet", "Run a scan and the momentum charts will start filling in."); wireEmpty(); return;
+  }
+  momDefaults();
+  paintMomentum(true);
+}
+
+function paintMomentum(full = false) {
+  const el = $("#p-momentum"); if (!el || !MOM.data) return;
+  const pts = momPts(), n = pts.length, [a, b] = momWindow();
+  if (MOM.idx == null || MOM.idx > b || MOM.idx < a) MOM.idx = b;
+  const one = n < 2;
+  const autoOn = +S.state?.settings?.auto_scan_hours > 0;
+  if (full || !$("#mo-up")) {
+    el.innerHTML = `
+    <div class="stats-row">
+      <div class="stat"><span>Scans in the chart</span><b>${n}</b></div>
+      <div class="stat"><span>Time covered</span><b>${one ? "One scan" : momSpan(momT(n - 1) - momT(0))}</b></div>
+      <div class="stat"><span>Rising fastest</span><b id="mo-s-up">—</b></div>
+      <div class="stat"><span>Cooling fastest</span><b id="mo-s-down">—</b></div>
+    </div>
+    ${one ? `<div class="card mo-note"><div class="ic">${ICON.momentum}</div><div><b>The chart needs at least two scans</b>
+      <p>Each scan adds a point to the timeline. Until there's a second one, the lists below compare sales from the past day with the past week.</p></div>
+      ${autoOn ? "" : `<button class="btn primary sm" id="mo-auto">Scan automatically every 6 hours</button>`}</div>` : `
+    <div class="card mo-card">
+      <div class="mo-top">
+        <div class="when"><b id="mo-when"></b><span>Share of all bestseller activity${MOM.data.scope ? " · " + esc(MOM.data.scope) : ""}</span></div>
+        ${chips("mo-rng", [["all", "All"], ["30", "30 days"], ["7", "7 days"]], MOM.range)}
+        <button class="btn sm" id="mo-tbl" title="Show the numbers as a table">${ICON.table} Table</button>
+      </div>
+      <div class="mo-legend" id="mo-legend"></div>
+      <div class="mo-chart" id="mo-chart"></div>
+      <div class="mo-slider">
+        <button class="mo-play" id="mo-play" title="Play through time" aria-label="Play through time">${ICON.play}</button>
+        <input type="range" class="mo-range" id="mo-range" aria-label="Point in time" min="${a}" max="${b}" step="1" value="${MOM.idx}">
+        <span class="mo-pos" id="mo-pos"></span>
+      </div>
+      <div class="mo-table" id="mo-table" style="display:${MOM.table ? "block" : "none"}"></div>
+    </div>`}
+    <div class="mo-cols">
+      <div class="card"><div class="card-h">Going well <small id="mo-cmp-up"></small></div><div class="mo-list" id="mo-up"></div></div>
+      <div class="card"><div class="card-h">Cooling off <small id="mo-cmp-down"></small></div><div class="mo-list" id="mo-down"></div></div>
+    </div>`;
+    if (one) {
+      const btn = $("#mo-auto");
+      if (btn) btn.onclick = async () => { S.state.settings = await call("save_settings", { auto_scan_hours: 6 }) || S.state.settings; updateStatus(); btn.remove(); toast("Automatic scans are on: every 6 hours.", "ok"); };
+    } else {
+      wireChips("mo-rng", v => { momStop(); MOM.range = v; MOM.idx = null; paintMomentum(true); });
+      $("#mo-tbl").onclick = () => { MOM.table = !MOM.table; $("#mo-table").style.display = MOM.table ? "block" : "none"; momTable(); };
+      const r = $("#mo-range");
+      r.oninput = () => { momStop(); momSetIdx(+r.value); };
+      $("#mo-play").onclick = () => MOM.play ? momStop() : momPlay();
+      const ch = $("#mo-chart");
+      const pick = e => {
+        const g = MOM.geo; if (!g) return;
+        const x = e.clientX - ch.getBoundingClientRect().left;
+        let best = g.a, bd = Infinity;
+        for (let i = g.a; i <= g.b; i++) { const d = Math.abs(g.x(i) - x); if (d < bd) { bd = d; best = i; } }
+        if (best !== MOM.idx) { momStop(); momSetIdx(best); }
+      };
+      ch.onpointerdown = e => { ch.setPointerCapture(e.pointerId); pick(e); };
+      ch.onpointermove = pick;
+    }
+  }
+  momLegend(); momChart(); momLists(); momTable();
+}
+function momSpan(ms) {
+  const h = ms / 36e5;
+  if (h < 1) return `${Math.max(1, Math.round(ms / 6e4))} min`;
+  if (h < 48) return `${Math.round(h)} hour${Math.round(h) === 1 ? "" : "s"}`;
+  return `${Math.round(h / 24)} days`;
+}
+function momSetIdx(i) {
+  MOM.idx = i;
+  const r = $("#mo-range"); if (r && +r.value !== i) r.value = i;
+  momChart(); momLists(); momTable();
+}
+function momPlay() {
+  const [a, b] = momWindow();
+  if (MOM.idx >= b) momSetIdx(a);
+  $("#mo-play").innerHTML = ICON.stop;
+  MOM.play = setInterval(() => {
+    if (S.page !== "momentum" || !$("#mo-range")) return momStop();
+    if (MOM.idx >= momWindow()[1]) return momStop();
+    momSetIdx(MOM.idx + 1);
+  }, Math.max(140, Math.min(600, 6000 / Math.max(1, b - a))));
+}
+function momStop() {
+  if (MOM.play) { clearInterval(MOM.play); MOM.play = null; }
+  const p = $("#mo-play"); if (p) p.innerHTML = ICON.play;
+}
+function momLegend() {
+  const el = $("#mo-legend"); if (!el) return;
+  const k = MOM.kind, list = momSeries();
+  el.innerHTML = MOM.sel[k].map(key => {
+    const s = list.find(x => x.key === key); if (!s) return "";
+    return `<button class="mo-leg" data-k="${esc(key)}" title="Remove from chart"><i style="background:${momColor(k, key)}"></i><span>${esc(k === "themes" ? title(s.name) : s.name)}</span><u>×</u></button>`;
+  }).join("") + `<span class="mo-hint">${MOM.sel[k].length ? "Click a row below to add or remove lines." : "Click a row below to put it on the chart."}</span>`;
+  el.querySelectorAll(".mo-leg").forEach(b => b.onclick = () => momToggle(b.dataset.k));
+}
+
+function momChart() {
+  const box = $("#mo-chart"); if (!box) return;
+  const k = MOM.kind, list = momSeries(), [a, b] = momWindow(), i0 = MOM.idx;
+  const sel = MOM.sel[k].map(key => list.find(s => s.key === key)).filter(Boolean);
+  const W = Math.max(320, box.clientWidth), H = box.clientHeight || 310;
+  const labels = sel.length && sel.length <= 4;
+  const P = { l: 46, r: labels ? 146 : 14, t: 12, b: 26 };
+  const t0 = momT(a), t1 = momT(b), span = Math.max(1, t1 - t0);
+  const x = i => b === a ? P.l + (W - P.l - P.r) / 2 : P.l + (momT(i) - t0) / span * (W - P.l - P.r);
+  let max = 0;
+  sel.forEach(s => { for (let i = a; i <= b; i++) max = Math.max(max, s.v[i]); });
+  const step = (() => { const raw = Math.max(max, 0.01) / 5, p = 10 ** Math.floor(Math.log10(raw)), f = raw / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p; })();
+  const top = step * Math.max(2, Math.ceil(max * 1.06 / step));
+  const y = v => P.t + (1 - v / top) * (H - P.t - P.b);
+  MOM.geo = { a, b, x };
+  let g = "";
+  for (let j = 0; j <= Math.round(top / step); j++) {
+    const v = step * j, yy = y(v);
+    g += `<line class="${j ? "gl" : "base"}" x1="${P.l}" x2="${W - P.r}" y1="${yy}" y2="${yy}"/>`;
+    g += `<text x="${P.l - 8}" y="${yy + 4}" text-anchor="end">${esc(momPct(v).replace(/\.0+%$/, "%"))}</text>`;
+  }
+  // date ticks: about one every 110px, never two on the same day label
+  const want = Math.max(2, Math.floor((W - P.l - P.r) / 110));
+  const short = span < 2 * DAY;
+  let lastX = -1e9, lastLab = "";
+  for (let n = 0; n <= want; n++) {
+    const tt = t0 + span * n / want;
+    let i = a; for (let j = a; j <= b; j++) if (Math.abs(momT(j) - tt) < Math.abs(momT(i) - tt)) i = j;
+    const d = new Date(momPts()[i]);
+    const lab = short ? d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) : d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+    const xx = x(i);
+    if (xx - lastX < 60 || lab === lastLab) continue;
+    g += `<text x="${xx}" y="${H - 6}" text-anchor="${xx < P.l + 20 ? "start" : xx > W - P.r - 20 ? "end" : "middle"}">${esc(lab)}</text>`;
+    lastX = xx; lastLab = lab;
+  }
+  // lines
+  sel.forEach(s => {
+    let d = "";
+    for (let i = a; i <= b; i++) d += `${i === a ? "M" : "L"}${x(i).toFixed(1)},${y(s.v[i]).toFixed(1)}`;
+    g += `<path class="ln" d="${d}" stroke="${momColor(k, s.key)}"/>`;
+  });
+  // everything after the slider point is dimmed, so "back then" reads clearly
+  const cx = x(i0);
+  if (i0 < b) g += `<rect class="future" x="${cx}" y="${P.t - 4}" width="${W - P.r - cx + 2}" height="${H - P.t - P.b + 4}"/>`;
+  // end labels (direct labels) for up to 4 lines, nudged apart so they never overlap
+  if (labels) {
+    const ls = sel.map(s => ({ s, yy: y(s.v[b]) })).sort((p, q) => p.yy - q.yy);
+    for (let j = 1; j < ls.length; j++) if (ls[j].yy - ls[j - 1].yy < 15) ls[j].yy = ls[j - 1].yy + 15;
+    const over = ls.length ? ls[ls.length - 1].yy - (H - P.b) : 0;
+    if (over > 0) ls.forEach(l => l.yy -= over);
+    ls.forEach(({ s, yy }) => {
+      const nm = k === "themes" ? title(s.name) : s.name;
+      g += `<text class="dl" x="${W - P.r + 10}" y="${yy + 4}">${esc(nm.length > 18 ? nm.slice(0, 17) + "…" : nm)}</text>`;
+    });
+  }
+  g += `<line class="cur" x1="${cx}" x2="${cx}" y1="${P.t - 4}" y2="${H - P.b}"/>`;
+  sel.forEach(s => g += `<circle class="dot" cx="${cx}" cy="${y(s.v[i0])}" r="5" fill="${momColor(k, s.key)}"/>`);
+  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Share of bestseller activity over time">${g}</svg>` +
+    (sel.length ? `<div class="mo-tip" id="mo-tip"></div>` : `<div class="mo-none" style="position:absolute;inset:40% 0 auto">Pick something from the lists below to chart it.</div>`);
+  // readout at the slider point
+  const tip = $("#mo-tip");
+  if (tip) {
+    const rows = sel.map(s => ({ s, v: s.v[i0], ch: momChange(s, i0) })).sort((p, q) => q.v - p.v);
+    tip.innerHTML = `<div class="h">${esc(momFmtDate(i0, true))}</div>` + rows.map(({ s, v, ch }) =>
+      `<div class="r"><i style="background:${momColor(k, s.key)}"></i><span>${esc(k === "themes" ? title(s.name) : s.name)}</span><b>${momPct(v)}</b><em>${momDeltaHtml(ch)}</em></div>`).join("");
+    const tw = tip.offsetWidth || 220;
+    tip.style.left = (cx + 14 + tw < W - 4 ? cx + 14 : Math.max(4, cx - 14 - tw)) + "px";
+  }
+  const when = $("#mo-when"); if (when) when.textContent = momFmtDate(i0, true);
+  const pos = $("#mo-pos"); if (pos) pos.textContent = i0 === b ? "Latest scan" : `${ago(momPts()[i0])}`;
+  const r = $("#mo-range"); if (r) r.style.setProperty("--fill", b === a ? "100%" : `${100 * (i0 - a) / (b - a)}%`);
+}
+
+function momSpark(s, a, i, color) {
+  const n = i - a + 1;
+  if (n < 2) return `<svg viewBox="0 0 84 26"></svg>`;
+  let mx = 0, mn = Infinity;
+  for (let j = a; j <= i; j++) { mx = Math.max(mx, s.v[j]); mn = Math.min(mn, s.v[j]); }
+  const rg = Math.max(mx - mn, mx * 0.05, 1e-6);
+  let d = "";
+  for (let j = a; j <= i; j++) d += `${j === a ? "M" : "L"}${(2 + 80 * (j - a) / (n - 1)).toFixed(1)},${(23 - 20 * (s.v[j] - mn) / rg).toFixed(1)}`;
+  return `<svg viewBox="0 0 84 26" aria-hidden="true"><path d="${d}" stroke="${color || "var(--muted)"}"/></svg>`;
+}
+function momLists() {
+  const up = $("#mo-up"), down = $("#mo-down"); if (!up) return;
+  const k = MOM.kind, i = MOM.idx, [a] = momWindow(), list = momSeries();
+  const rows = list.map(s => ({ s, ch: momChange(s, i) })).filter(r => r.ch && s0(r.s, i));
+  function s0(s, i) { return s.v[i] > 0 || (i > 0 && s.v[i - 1] > 0); }
+  const score = r => r.ch.mom != null ? r.ch.mom - 1 : r.ch.d;
+  const rising = rows.filter(r => score(r) > (r.ch.mom != null ? 0.15 : 0)).sort((p, q) => score(q) - score(p)).slice(0, 8);
+  const falling = rows.filter(r => score(r) < (r.ch.mom != null ? -0.13 : 0)).sort((p, q) => score(p) - score(q)).slice(0, 8);
+  const base = momBase(i);
+  const cmp = base == null ? "today vs. this week" : `vs. ${momFmtDate(base, true)}`;
+  $("#mo-cmp-up").textContent = cmp; $("#mo-cmp-down").textContent = cmp;
+  $("#mo-s-up").textContent = rising[0] ? (k === "themes" ? title(rising[0].s.name) : rising[0].s.name) : "—";
+  $("#mo-s-down").textContent = falling[0] ? (k === "themes" ? title(falling[0].s.name) : falling[0].s.name) : "—";
+  const row = ({ s, ch }) => {
+    const col = momPts().length > 1 ? momColor(k, s.key) : null, on = !!col;
+    const nm = k === "themes" ? title(s.name) : s.name;
+    const sub = k === "themes" ? `${s.n} bestseller${s.n === 1 ? "" : "s"}` : `${s.type} · ${s.price}`;
+    const lead = k === "items" ? imgBox(null, "", s.id) : `<i class="mk" style="${on ? `background:${col};border-color:${col}` : ""}"></i>`;
+    return `<div class="mo-row ${on ? "on" : ""}" data-k="${esc(s.key)}" title="${on ? "Remove from chart" : "Add to chart"}">${lead}
+      <div class="nm"><b>${esc(nm)}</b><span>${esc(sub)}</span></div>${momSpark(s, a, i, col)}
+      <div class="val">${momPct(s.v[i])}</div><div class="dl">${momDeltaHtml(ch)}</div></div>`;
+  };
+  up.innerHTML = rising.map(row).join("") || `<div class="mo-none">Nothing is clearly climbing at this point.</div>`;
+  down.innerHTML = falling.map(row).join("") || `<div class="mo-none">Nothing is clearly slowing down at this point.</div>`;
+  [up, down].forEach(el => {
+    el.querySelectorAll(".mo-row").forEach(r => r.onclick = () => {
+      if (momPts().length < 2) { if (k === "themes") call("open_url", "https://www.roblox.com/catalog?Keyword=" + encodeURIComponent(r.dataset.k));
+        else { const s = list.find(x => x.key === r.dataset.k); s && lightbox({ ...s, thumb: null }); } return; }
+      momToggle(r.dataset.k);
+    });
+    wireImages(el);
+  });
+}
+function momTable() {
+  const el = $("#mo-table"); if (!el || !MOM.table) return;
+  const k = MOM.kind, list = momSeries(), [a, b] = momWindow();
+  const sel = MOM.sel[k].map(key => list.find(s => s.key === key)).filter(Boolean);
+  if (!sel.length) { el.innerHTML = `<div class="mo-none">Nothing on the chart yet.</div>`; return; }
+  let rows = "";
+  for (let i = b; i >= a; i--) rows += `<tr${i === MOM.idx ? ` style="background:var(--soft)"` : ""}><td>${esc(momFmtDate(i, true))}</td>${sel.map(s => `<td class="c">${momPct(s.v[i])}</td>`).join("")}</tr>`;
+  el.innerHTML = `<table><thead><tr><th>Scan</th>${sel.map(s => `<th class="c">${esc(k === "themes" ? title(s.name) : s.name)}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table>`;
+}
+window.addEventListener("resize", () => { if (S.page === "momentum" && MOM.data) momChart(); });
 
 /* ---------- history ---------- */
 function renderHistory() {

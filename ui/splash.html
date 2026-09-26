@@ -37,8 +37,9 @@ body.done .logo { animation: pop .45s cubic-bezier(.2,.9,.3,1.25); }
 /* Hand-off to the app: everything swells outward while the window itself fades away. */
 .stage { position: absolute; inset: 0; transform-origin: 50% 50%; animation: enter .35s cubic-bezier(.2,.8,.2,1) both; }
 @keyframes enter { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: none; } }
-body.leaving .stage { animation: leave .38s cubic-bezier(.3,0,.2,1) forwards; }
-@keyframes leave { from { opacity: 1; transform: none; } 80% { opacity: 0; } to { opacity: 0; transform: scale(1.14); } }
+body.leaving .stage { animation: leave .22s cubic-bezier(.4,0,.2,1) forwards; }
+body.leaving { border-color: transparent; transition: border-color .3s ease; }
+@keyframes leave { from { opacity: 1; transform: none; } to { opacity: 0; transform: scale(1.06); } }
 @keyframes pop { 40% { transform: scale(1.08); } 100% { transform: scale(1); } }
 </style>
 </head>

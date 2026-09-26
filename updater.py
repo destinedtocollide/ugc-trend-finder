@@ -105,7 +105,7 @@ def apply_installer(info, on_progress=None):
     tmp = os.path.join(tempfile.gettempdir(), f"UGC-Trend-Finder-Setup-{info['version']}.exe")
     download(info["installer_url"], tmp, on_progress)
     flags = 0x00000008 | 0x00000200  # DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP
-    subprocess.Popen([tmp, "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART",
+    subprocess.Popen([tmp, "/SILENT", "/SUPPRESSMSGBOXES", "/NORESTART",
                       "/CLOSEAPPLICATIONS", "/FORCECLOSEAPPLICATIONS"],
                      creationflags=flags, close_fds=True)
 

@@ -23,6 +23,22 @@ EXE_DIR = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else 
 if APP_DIR not in sys.path:
     sys.path.insert(0, APP_DIR)
 
+try:                                            # instant startup image shown by the .exe
+    import pyi_splash  # noqa: F401
+except Exception:
+    pyi_splash = None
+
+
+def close_native_splash():
+    global pyi_splash
+    if pyi_splash is not None:
+        try:
+            pyi_splash.close()
+        except Exception:
+            pass
+        pyi_splash = None
+
+
 import ugc_trend_finder as core  # noqa: E402
 import updater  # noqa: E402
 
@@ -34,6 +50,16 @@ APP_NAME = "UGC Trend Finder"
 SINGLE_PORT = 47831
 BG = "#0f1115"
 SIDE = "#13161b"
+# theme -> (window background, title bar color, dark title bar?)
+THEMES = {
+    "midnight": ("#0f1115", "#13161b", True),
+    "sakura": ("#151015", "#1a1219", True),
+    "violet": ("#100f16", "#15131d", True),
+    "emerald": ("#0d1311", "#111815", True),
+    "sunset": ("#14100d", "#1a1511", True),
+    "graphite": ("#111111", "#161616", True),
+    "daylight": ("#f4f5f8", "#ffffff", False),
+}
 
 DATA_HOME = os.path.join(os.environ.get("LOCALAPPDATA") or os.path.expanduser("~"), "UGC Trend Finder")
 SETTINGS_PATH = os.path.join(os.path.expanduser("~"), ".ugc_trend_finder_settings.json")
@@ -48,7 +74,9 @@ DEFAULTS = {
     "open_report": False,
     "close_to_tray": True,
     "auto_scan_hours": 0,
-    "auto_update": True,
+    "auto_install": False,
+    "theme": "midnight",
+    "last_version_seen": "",
     "tray_hint_shown": False,
     "update_attempt": {},
 }
@@ -114,16 +142,18 @@ def stamp_time(filename):
     return None
 
 
-def dark_titlebar(hwnd):
+def dark_titlebar(hwnd, theme="midnight"):
+    """Colors the Windows title bar to match the theme (Windows 10/11)."""
     if sys.platform != "win32" or not hwnd:
         return
+    _bg, caption, dark = THEMES.get(theme, THEMES["midnight"])
     try:
         import ctypes
-        on = ctypes.c_int(1)
+        on = ctypes.c_int(1 if dark else 0)
         for attr in (20, 19):
             if ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, attr, ctypes.byref(on), 4) == 0:
                 break
-        r, g, b = int(SIDE[1:3], 16), int(SIDE[3:5], 16), int(SIDE[5:7], 16)
+        r, g, b = int(caption[1:3], 16), int(caption[3:5], 16), int(caption[5:7], 16)
         color = ctypes.c_int(r | (g << 8) | (b << 16))
         ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, 35, ctypes.byref(color), 4)
     except Exception:
@@ -193,7 +223,7 @@ class Api:
         return True
 
     def save_settings(self, patch):
-        allowed = set(DEFAULTS) - {"update_attempt", "tray_hint_shown", "out_dir"}
+        allowed = set(DEFAULTS) - {"update_attempt", "tray_hint_shown", "out_dir", "last_version_seen"}
         for k, v in (patch or {}).items():
             if k in allowed:
                 self._app.settings[k] = v
@@ -262,6 +292,23 @@ class Api:
     def check_update(self):
         return self._app.check_update(manual=True)
 
+    def set_theme(self, name):
+        if name not in THEMES:
+            return False
+        self._app.settings["theme"] = name
+        save_settings(self._app.settings)
+        dark_titlebar(self._app.hwnd, name)
+        return True
+
+    def release_notes(self, version):
+        if not REPO:
+            return ""
+        try:
+            rel = updater._get(f"https://api.github.com/repos/{REPO}/releases/tags/v{version}")
+            return (rel.get("body") or "").strip()
+        except Exception:
+            return ""
+
     def install_update(self):
         threading.Thread(target=self._app.install_update, daemon=True).start()
         return True
@@ -289,8 +336,27 @@ class TrendApp:
         self.update_status = ""
         self.updating = False
         self.lock = threading.Lock()
+        self.hwnd = None
+        if self.settings.get("theme") not in THEMES:
+            self.settings["theme"] = "midnight"
+        # remember whether this start is the first one after an update
+        seen = self.settings.get("last_version_seen") or ""
+        if not seen and self._had_older_install():
+            seen = "1.3"                                  # v1.3 and older didn't record this
+        self.just_updated = VERSION if seen and updater.vtuple(seen) < updater.vtuple(VERSION) else None
+        if seen != VERSION:
+            self.settings["last_version_seen"] = VERSION
+            save_settings(self.settings)
 
     # ---- helpers
+    @staticmethod
+    def _had_older_install():
+        try:
+            with open(SETTINGS_PATH, encoding="utf-8") as f:
+                return "last_version_seen" not in json.load(f)
+        except Exception:
+            return False
+
     def emit(self, ev):
         if self.run is not None:
             self._track(ev)
@@ -359,6 +425,7 @@ class TrendApp:
             "history": hist, "last_scan": hist[0]["iso"] if hist else None, "running": running,
             "update": self.update_info if (self.update_info or {}).get("available") else None,
             "update_status": self.update_status, "tray": bool(self.tray),
+            "just_updated": self.just_updated,
         }
 
     def notify(self, title, text):
@@ -433,9 +500,19 @@ class TrendApp:
 
     def background_loop(self):
         """Automatic scans and update checks."""
-        next_update_check = time.time() + 6
+        next_update_check = time.time() + 4
+        tick = 0
         while not self.quitting:
-            time.sleep(15)
+            time.sleep(1)
+            tick += 1
+            if time.time() >= next_update_check:
+                next_update_check = time.time() + 6 * 3600
+                try:
+                    self.check_update(manual=False)
+                except Exception:
+                    write_log(traceback.format_exc())
+            if tick % 15:
+                continue
             try:
                 hrs = int(self.settings.get("auto_scan_hours") or 0)
                 busy = self.worker and self.worker.is_alive()
@@ -444,9 +521,6 @@ class TrendApp:
                     if last is None or (datetime.now() - last).total_seconds() >= hrs * 3600:
                         self.start_scan(auto=True)
                         self.emit({"type": "toast", "msg": "Automatic scan started."})
-                if time.time() >= next_update_check:
-                    next_update_check = time.time() + 6 * 3600
-                    self.check_update(manual=False)
             except Exception:
                 write_log(traceback.format_exc())
 
@@ -470,14 +544,14 @@ class TrendApp:
         attempt = self.settings.get("update_attempt") or {}
         recently_failed = attempt.get("version") == info["version"] and time.time() - attempt.get("at", 0) < 24 * 3600
         busy = self.worker and self.worker.is_alive()
-        if not manual and self.settings.get("auto_update", True) and not recently_failed and not busy:
+        if not manual and self.settings.get("auto_install", False) and not recently_failed and not busy:
             if FROZEN and not info.get("installer_url"):
                 return {"message": self.update_status}      # installer still building; try later
             threading.Thread(target=self.install_update, daemon=True).start()
         else:
             self.emit({"type": "update", "info": info})
             if self.hidden and not manual:
-                self.notify("Update available", f"Version {info['version']} is ready to install.")
+                self.notify("Update available", f"Version {info['version']} is ready. Open the app to update.")
         return {"message": self.update_status, "info": info}
 
     def install_update(self):
@@ -612,9 +686,11 @@ class TrendApp:
         try:
             native = self.window.native
             hwnd = native.Handle.ToInt64() if hasattr(native.Handle, "ToInt64") else int(native.Handle)
-            dark_titlebar(hwnd)
+            self.hwnd = hwnd
+            dark_titlebar(hwnd, self.settings.get("theme", "midnight"))
         except Exception:
             pass
+        close_native_splash()
         self.start_tray()
         threading.Thread(target=self.single_instance_server, daemon=True).start()
         threading.Thread(target=self.background_loop, daemon=True).start()
@@ -623,15 +699,15 @@ class TrendApp:
         import webview
         start_hidden = "--tray" in sys.argv          # started with Windows: stay in the tray
         self.hidden = start_hidden
-        # The page is handed to the window directly instead of through pywebview's local
-        # web server. That server uses a fixed default port, so another pywebview app that
-        # is already running (e.g. a different tracker) would answer instead and show its
-        # own interface in this window.
+        # The page is handed to the window directly (not loaded from a local address), so
+        # another app running on this PC can never end up showing its page in this window.
         with open(os.path.join(APP_DIR, "ui", "index.html"), encoding="utf-8") as f:
             page = f.read()
+        theme = self.settings.get("theme", "midnight")
+        page = page.replace('<html lang="en">', f'<html lang="en" data-theme="{theme}">', 1)
         self.window = webview.create_window(
             APP_NAME, html=page, js_api=Api(self),
-            width=1280, height=840, min_size=(960, 640), background_color=BG, text_select=False,
+            width=1280, height=840, min_size=(960, 640), background_color=THEMES[theme][0], text_select=False,
             hidden=start_hidden)
         self.window.events.closing += self.on_closing
         webview.start(self.on_started, debug=False, private_mode=False,
@@ -642,6 +718,7 @@ class TrendApp:
 
 def main():
     if signal_running_instance():
+        close_native_splash()
         return
     os.makedirs(DATA_HOME, exist_ok=True)
     TrendApp().run_app()

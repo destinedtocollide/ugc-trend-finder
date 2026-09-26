@@ -1,6 +1,41 @@
-"""Draws icon.png and icon.ico (blue app icon). Run automatically by the build."""
+"""Draws icon.png, icon.ico and splash.png (startup image). Run automatically by the build."""
 import os
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
+
+
+def _font(names, size):
+    for n in names:
+        try:
+            return ImageFont.truetype(n, size)
+        except Exception:
+            continue
+    try:
+        return ImageFont.load_default(size=size)
+    except Exception:
+        return ImageFont.load_default()
+
+
+def splash(icon, folder):
+    """The image the .exe shows the instant it's opened, before the window appears."""
+    W, H, S = 520, 320, 2                        # drawn at 2x, then scaled down for smooth edges
+    im = Image.new("RGB", (W * S, H * S), (15, 17, 21))
+    d = ImageDraw.Draw(im)
+    d.rectangle((0, 0, W * S - 1, H * S - 1), outline=(38, 42, 51), width=2 * S)
+    size = 96 * S
+    ic = icon.resize((size, size), Image.LANCZOS)
+    im.paste(ic, ((W * S - size) // 2, 52 * S), ic)
+    bold = _font(["segoeuib.ttf", "seguisb.ttf", "arialbd.ttf", "DejaVuSans-Bold.ttf"], 26 * S)
+    reg = _font(["segoeui.ttf", "arial.ttf", "DejaVuSans.ttf"], 14 * S)
+
+    def center(text, y, font, fill):
+        w = d.textlength(text, font=font)
+        d.text(((W * S - w) / 2, y), text, font=font, fill=fill)
+    center("UGC Trend Finder", 166 * S, bold, (232, 234, 238))
+    center("Starting…", 204 * S, reg, (127, 135, 149))
+    bx, by, bw, bh = (W - 240) // 2 * S, 244 * S, 240 * S, 6 * S
+    d.rounded_rectangle((bx, by, bx + bw, by + bh), radius=bh // 2, fill=(35, 39, 49))
+    d.rounded_rectangle((bx, by, bx + int(bw * .12), by + bh), radius=bh // 2, fill=(74, 134, 240))
+    im.resize((W, H), Image.LANCZOS).save(os.path.join(folder, "splash.png"))
 
 
 def main(folder=None):
@@ -30,6 +65,7 @@ def main(folder=None):
     im.resize((256, 256), Image.LANCZOS).save(os.path.join(folder, "icon.png"))
     im.save(os.path.join(folder, "icon.ico"),
             sizes=[(16, 16), (20, 20), (24, 24), (32, 32), (40, 40), (48, 48), (64, 64), (128, 128), (256, 256)])
+    splash(im, folder)
 
 
 if __name__ == "__main__":

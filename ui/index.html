@@ -433,6 +433,8 @@ td.num-c { color: var(--muted); font-variant-numeric: tabular-nums; width: 40px;
 [data-theme="daylight"] { --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300; }
 .mo-card { padding: 16px 20px 18px; }
 .actions #mo-kind { flex-wrap: nowrap; }
+.actions #c-sv { flex-wrap: nowrap; gap: 6px; }
+.actions #c-sv .chip { height: 30px; padding: 0 12px; font-size: 12.5px; }
 .mo-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
 .mo-top .when { flex: 1; min-width: 180px; }
 .mo-top .when b { display: block; font: 600 16px/1.3 var(--font-d); font-variant-numeric: tabular-nums; }
@@ -505,6 +507,43 @@ td.num-c { color: var(--muted); font-variant-numeric: tabular-nums; width: 40px;
 .mo-table { margin-top: 14px; max-height: 280px; overflow: auto; border-top: 1px solid var(--line); }
 .mo-table table { font-size: 12.5px; }
 
+/* ---------- my list ---------- */
+textarea { user-select: text; }
+.sv-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; }
+.sv { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: flex; flex-direction: column; gap: 12px; transition: border-color .2s, opacity .2s; }
+.sv:hover { border-color: var(--line2); }
+.sv.skip { opacity: .62; }
+.sv-top { display: grid; grid-template-columns: 76px 1fr; gap: 14px; align-items: start; }
+.sv-top .img { width: 76px; height: 76px; border-radius: 10px; cursor: zoom-in; }
+.sv-top .img .ph svg { width: 22px; height: 22px; }
+.sv-top h3 { margin: 0 0 3px; font: 600 16px/1.3 var(--font-d); }
+.sv-top h3 span { color: var(--muted); font-weight: 400; }
+.sv-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.sv-now { font-size: 12.5px; color: var(--ink2); margin-top: 7px; display: flex; align-items: center; gap: 6px; }
+.sv-now i { width: 7px; height: 7px; border-radius: 99px; background: var(--muted); flex: none; }
+.sv-now.hot i { background: var(--ok); } .sv-now.cool i { background: var(--danger); }
+.seg { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--card2); border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 3px; }
+.seg button { height: 28px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); font-size: 12.5px; cursor: pointer; transition: background .15s, color .15s; }
+.seg button:hover { color: var(--ink); background: var(--soft); }
+.seg button.on { background: var(--soft2); color: var(--ink); font-weight: 600; }
+.seg button.on[data-s="making"] { background: var(--warn-bg); color: var(--warn); }
+.seg button.on[data-s="done"] { background: var(--ok-bg); color: var(--ok); }
+.sv textarea { width: 100%; min-height: 64px; resize: vertical; background: var(--card2); border: 1px solid var(--line); border-radius: 10px; color: var(--ink);
+  font: 13px/1.5 var(--font); padding: 9px 11px; outline: none; transition: border-color .15s; }
+.sv textarea:focus { border-color: var(--accent-line); }
+.sv textarea::placeholder { color: var(--muted); }
+.sv-f { display: flex; gap: 8px; align-items: center; }
+.sv-f .saved-at { margin-left: auto; color: var(--muted); font-size: 12px; }
+.btn.saved { color: var(--accent2); border-color: var(--accent-line); background: var(--accent-dim); }
+.idea-f { display: flex; gap: 8px; flex-wrap: wrap; }
+.type-bar { display: flex; flex-wrap: wrap; gap: 6px; margin: -2px 0 14px; }
+.type-bar .chip { height: 30px; padding: 0 12px; font-size: 12.5px; }
+.type-bar .chip small { opacity: .6; margin-left: 5px; font-size: 11.5px; }
+.mo-tipbar { display: flex; align-items: center; gap: 10px; background: var(--accent-dim); border: 1px solid var(--accent-line); color: var(--ink2);
+  border-radius: 10px; padding: 8px 12px; font-size: 12.5px; margin-bottom: 12px; }
+.mo-tipbar b { color: var(--ink); }
+.mo-tipbar .btn { margin-left: auto; }
+
 @media (max-width: 1180px) {
   .stats4, .stats-row { grid-template-columns: repeat(2, minmax(0,1fr)); }
 }
@@ -512,6 +551,7 @@ td.num-c { color: var(--muted); font-variant-numeric: tabular-nums; width: 40px;
   .app { grid-template-columns: 208px 1fr; }
   .ideas { grid-template-columns: 1fr; }
   .mo-cols { grid-template-columns: 1fr; }
+  .sv-grid { grid-template-columns: 1fr; }
   .page { padding: 18px 20px 28px; }
   .header { padding: 18px 20px 14px; }
 }
@@ -560,6 +600,7 @@ td.num-c { color: var(--muted); font-variant-numeric: tabular-nums; width: 40px;
       </section>
       <section class="page" id="p-scan"></section>
       <section class="page" id="p-ideas"></section>
+      <section class="page" id="p-saved"></section>
       <section class="page" id="p-trends"></section>
       <section class="page" id="p-momentum"></section>
       <section class="page" id="p-history"></section>
@@ -582,6 +623,9 @@ const ICON = {
   play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/></svg>',
   stop: '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>',
   table: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/></svg>',
+  saved: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.5L5 21V4a1 1 0 0 1 1-1z"/></svg>',
+  savedOn: '<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.5L5 21V4a1 1 0 0 1 1-1z"/></svg>',
+  trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>',
   history: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
   settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
   help: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>',
@@ -596,6 +640,7 @@ const ICON = {
 const PAGES = [
   ["scan", "New scan", "Reads the Roblox bestseller, most-favorited and newest-upload lists, then works out what you could make."],
   ["ideas", "Ideas", "Themes buyers want, on item types without much competition yet."],
+  ["saved", "My list", "Ideas you saved. Track what you're making and keep notes next to each one."],
   ["trends", "Trending themes", "Every theme from your scan. Click one to search it on the Roblox marketplace."],
   ["momentum", "Momentum", "How themes and items have been selling across your scans. Drag the slider to go back in time."],
   ["history", "History", "Every scan you've run. Scanning every few days shows which themes are climbing."],
@@ -630,6 +675,7 @@ function ago(iso) {
 let api = null;
 const S = {
   page: null, state: null, scan: null, current: null, currentId: null, search: "",
+  saved: [], savedLoaded: false, savedFilter: "all", ideaType: "all",
   run: { running: false, logs: [] },
 };
 
@@ -774,8 +820,8 @@ document.addEventListener("click", () => document.querySelectorAll(".dd.open").f
 /* ---------- navigation ---------- */
 function buildNav() {
   const mk = ([key, label]) => `<button data-p="${key}">${ICON[key]}<span>${esc(label)}</span></button>`;
-  $("#nav-top").innerHTML = PAGES.slice(0, 5).map(mk).join("");
-  $("#nav-bottom").innerHTML = PAGES.slice(5).map(mk).join("");
+  $("#nav-top").innerHTML = PAGES.slice(0, 6).map(mk).join("");
+  $("#nav-bottom").innerHTML = PAGES.slice(6).map(mk).join("");
   document.querySelectorAll(".nav button").forEach(b => b.onclick = () => show(b.dataset.p));
 }
 function show(page) {
@@ -788,7 +834,7 @@ function show(page) {
   document.querySelectorAll(".page").forEach(s => { s.classList.remove("active"); s.style.display = ""; });
   const el = document.getElementById("p-" + page);
   el.classList.add("active");
-  ({ scan: renderScan, ideas: renderIdeas, trends: renderTrends, momentum: renderMomentum, history: renderHistory, settings: renderSettings, help: renderHelp })[page]();
+  ({ scan: renderScan, ideas: renderIdeas, saved: renderSaved, trends: renderTrends, momentum: renderMomentum, history: renderHistory, settings: renderSettings, help: renderHelp })[page]();
   $("#scroll").scrollTop = 0;
 }
 
@@ -797,6 +843,7 @@ async function refreshState() {
   const st = await call("get_state");
   if (!st) return;
   S.state = st;
+  if (!S.savedLoaded) { S.saved = await call("get_saved") || []; S.savedLoaded = true; }
   if (!S.currentId || !st.history.find(h => h.id === S.currentId)) {
     S.currentId = st.history[0]?.id || null;
     S.current = null;
@@ -843,6 +890,13 @@ function updateStatus() {
   }
   $("#st-next").textContent = next;
   $("#st-scan").disabled = running;
+  const savedBtn = document.querySelector('.nav button[data-p="saved"]');
+  if (savedBtn) {
+    const n = (S.saved || []).filter(x => x.status === "todo" || x.status === "making").length;
+    let b = savedBtn.querySelector(".badge");
+    if (n && !b) { b = document.createElement("span"); b.className = "badge"; savedBtn.appendChild(b); }
+    if (b) { if (n) b.textContent = n; else b.remove(); }
+  }
   const ideasBtn = document.querySelector('.nav button[data-p="ideas"]');
   if (ideasBtn) {
     const n = S.current?.ideas?.length || 0;
@@ -1039,7 +1093,8 @@ function renderIdeas() {
   <div class="strip" id="strip">${top.map((it, i) => `<div class="item" data-i="${i}">${imgBox(it.thumb, "", itemId(it))}<span class="rank">#${i + 1}</span>
     <div class="meta"><b title="${esc(it.name)}">${esc(it.name)}</b><span>${esc(it.type)} · ${esc(it.price)}</span></div></div>`).join("")}</div>` : ""}
   <div class="sec-title"><h2>Ideas to make</h2><span>Ranked by demand vs. competition</span></div>
-  ${ideas.length ? `<div class="ideas">${ideas.map(ideaCard).join("")}</div>`
+  ${typeBar(ideas)}
+  ${ideas.length ? `<div class="ideas">${ideas.map((idea, i) => S.ideaType === "all" || idea.type === S.ideaType ? ideaCard(idea, i) : "").join("")}</div>`
     : `<div class="card"><div class="card-b muted">No ideas in this scan. Try a Normal or Deep scan.</div></div>`}`;
   el.querySelectorAll(".item").forEach(c => c.onclick = () => lightbox(top[+c.dataset.i]));
   el.querySelectorAll(".idea").forEach(card => {
@@ -1047,7 +1102,9 @@ function renderIdeas() {
     card.querySelector(".idea-top .img").onclick = () => idea.examples?.[0] && lightbox({ ...idea.examples[0], thumb: idea.image || idea.examples[0].thumb });
     card.querySelectorAll(".ex").forEach(x => x.onclick = () => lightbox(idea.examples[+x.dataset.j]));
     card.querySelector(".b-search").onclick = () => call("open_url", "https://www.roblox.com/catalog?Keyword=" + encodeURIComponent(idea.theme));
+    card.querySelector(".b-save").onclick = e => toggleSave(idea, e.currentTarget);
   });
+  el.querySelectorAll("#type-bar .chip").forEach(c => c.onclick = () => { S.ideaType = c.dataset.v; const y = $("#scroll").scrollTop; renderIdeas(); $("#scroll").scrollTop = y; });
   wireImages(el);
   updateStatus();
 }
@@ -1071,13 +1128,103 @@ function ideaCard(idea, i) {
       <ul class="reasons">${(idea.reasons || []).map(r => `<li>${esc(r)}</li>`).join("")}</ul>
       ${idea.examples?.length ? `<div class="lbl">Look at these for reference</div><div class="examples">${idea.examples.map((ex, j) =>
         `<div class="ex" data-j="${j}">${imgBox(ex.thumb, "", itemId(ex))}<div><b>${esc(ex.name)}</b><span>${esc(ex.type)} · ${esc(ex.price)}</span></div></div>`).join("")}</div>` : ""}
-      <div class="idea-f"><button class="btn sm b-search">${ICON.search} Search “${esc(idea.theme)}” on Roblox</button></div>
+      <div class="idea-f">${saveBtn(idea)}<button class="btn sm b-search">${ICON.search} Search “${esc(idea.theme)}” on Roblox</button></div>
     </div></article>`;
 }
 function emptyState(icon, t, text) {
   return `<div class="empty"><div class="ic">${icon}</div><h3>${esc(t)}</h3><p>${esc(text)}</p><button class="btn primary" id="b-first">Run your first scan</button></div>`;
 }
 function wireEmpty() { const b = $("#b-first"); if (b) b.onclick = () => { show("scan"); startScan(); }; }
+
+/* ---------- my list ---------- */
+const STATUS = [["todo", "To do"], ["making", "Making"], ["done", "Uploaded"], ["skip", "Skipped"]];
+const ideaKey = idea => `${idea.theme}|${idea.type}`.toLowerCase();
+const isSaved = idea => (S.saved || []).some(x => x.key === ideaKey(idea));
+function saveBtn(idea) {
+  const on = isSaved(idea);
+  return `<button class="btn sm b-save ${on ? "saved" : ""}">${on ? ICON.savedOn + " Saved" : ICON.saved + " Save to my list"}</button>`;
+}
+function typeBar(ideas) {
+  if (ideas.length < 4) return "";
+  const counts = {};
+  ideas.forEach(i => counts[i.type] = (counts[i.type] || 0) + 1);
+  const types = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  if (types.length < 2) return "";
+  if (S.ideaType !== "all" && !counts[S.ideaType]) S.ideaType = "all";
+  return `<div class="type-bar" id="type-bar"><button class="chip ${S.ideaType === "all" ? "on" : ""}" data-v="all">All types<small>${ideas.length}</small></button>${
+    types.map(([t, n]) => `<button class="chip ${S.ideaType === t ? "on" : ""}" data-v="${esc(t)}">${esc(t)}<small>${n}</small></button>`).join("")}</div>`;
+}
+async function toggleSave(idea, btn) {
+  const key = ideaKey(idea);
+  if (isSaved(idea)) {
+    S.saved = await call("remove_saved", key) || S.saved;
+    toast("Removed from your list.");
+  } else {
+    const ex = (idea.examples || []).find(e => e.thumb && e.thumb === idea.image) || idea.examples?.[0];
+    S.saved = await call("save_idea", { theme: idea.theme, type: idea.type, image: idea.image || ex?.thumb || null, image_id: itemId(ex),
+      price: idea.price, score: idea.score, colors: idea.colors, reasons: (idea.reasons || []).slice(0, 3), kind: idea.kind,
+      examples: (idea.examples || []).slice(0, 4) }) || S.saved;
+    toast(`Saved “${title(idea.theme)} · ${idea.type}” to your list.`, "ok");
+  }
+  if (btn) btn.outerHTML = saveBtn(idea);
+  document.querySelectorAll(".idea").forEach(card => {
+    const b = card.querySelector(".b-save"), i = S.current?.ideas?.[+card.dataset.i];
+    if (b && i) b.onclick = e => toggleSave(i, e.currentTarget);
+  });
+  updateStatus();
+}
+function trendNow(theme) {
+  const ts = S.current?.themes || [];
+  const i = ts.findIndex(t => t.theme === theme);
+  if (i < 0) return { cls: "", text: "Not among the trending themes in your latest scan" };
+  const t = ts[i], m = t.momentum;
+  const mom = m >= 1.2 ? `selling faster today (${m.toFixed(1)}×)` : m <= 0.8 ? `slowing down today (${m.toFixed(1)}×)` : "steady today";
+  return { cls: m >= 1.2 ? "hot" : m <= 0.8 ? "cool" : "", text: `Now #${i + 1} theme · ${mom}` };
+}
+function renderSaved() {
+  const el = $("#p-saved"), items = S.saved || [];
+  const count = k => items.filter(x => x.status === k).length;
+  $("#h-actions").innerHTML = items.length ? chips("c-sv", [["all", `All ${items.length}`], ...STATUS.map(([k, l]) => [k, `${l} ${count(k)}`])], S.savedFilter) : "";
+  if (items.length) wireChips("c-sv", v => { S.savedFilter = v; renderSaved(); });
+  if (!items.length) {
+    el.innerHTML = `<div class="empty"><div class="ic">${ICON.saved}</div><h3>Nothing saved yet</h3><p>Press “Save to my list” on any idea to keep it here, with a status and your own notes.</p>
+      <button class="btn primary" id="b-browse">Browse ideas</button></div>`;
+    $("#b-browse").onclick = () => show("ideas"); return;
+  }
+  const shown = items.filter(x => S.savedFilter === "all" || x.status === S.savedFilter);
+  el.innerHTML = shown.length ? `<div class="sv-grid">${shown.map(x => {
+    const now = trendNow(x.theme), pr = x.price;
+    const price = pr ? (pr[0] === pr[1] ? `${fmtNum(pr[0])} R$` : `${fmtNum(pr[0])}–${fmtNum(pr[1])} R$`) : null;
+    return `<article class="sv ${x.status}" data-k="${esc(x.key)}">
+      <div class="sv-top">${imgBox(x.image, "", x.image_id || "")}
+        <div><h3>${esc(title(x.theme))} <span>·</span> ${esc(x.type)}</h3>
+          <div class="sv-meta">${price ? `<span class="tag">${price}</span>` : ""}${x.score != null ? `<span class="tag">Score ${x.score}</span>` : ""}${
+            x.kind ? (x.kind === "proven" ? `<span class="tag ok">Proven combo</span>` : `<span class="tag gap">Open gap</span>`) : ""}</div>
+          <div class="sv-now ${now.cls}"><i></i>${esc(now.text)}</div></div></div>
+      <div class="seg">${STATUS.map(([k, l]) => `<button data-s="${k}" class="${x.status === k ? "on" : ""}">${l}</button>`).join("")}</div>
+      <textarea placeholder="Notes: colors, poly count, where you left off…">${esc(x.notes || "")}</textarea>
+      <div class="sv-f"><button class="btn sm b-search">${ICON.search} Search on Roblox</button><button class="btn sm danger b-rm">${ICON.trash} Remove</button>
+        <span class="saved-at">Saved ${esc(ago(x.added))}</span></div></article>`;
+  }).join("")}</div>` : `<div class="card"><div class="card-b muted" style="text-align:center;padding:36px">Nothing here with that status.</div></div>`;
+  el.querySelectorAll(".sv").forEach(card => {
+    const key = card.dataset.k, x = items.find(i => i.key === key);
+    card.querySelector(".img").onclick = () => x.examples?.[0] ? lightbox({ ...x.examples[0], thumb: x.image || x.examples[0].thumb }) : null;
+    card.querySelectorAll(".seg button").forEach(b => b.onclick = async () => {
+      S.saved = await call("update_saved", key, { status: b.dataset.s }) || S.saved;
+      updateStatus(); renderSaved();
+    });
+    let t = null;
+    const ta = card.querySelector("textarea");
+    ta.oninput = () => { clearTimeout(t); t = setTimeout(async () => { S.saved = await call("update_saved", key, { notes: ta.value }) || S.saved; }, 500); };
+    card.querySelector(".b-search").onclick = () => call("open_url", "https://www.roblox.com/catalog?Keyword=" + encodeURIComponent(x.theme));
+    card.querySelector(".b-rm").onclick = async () => {
+      const a = await modal("Remove this idea?", `“${title(x.theme)} · ${x.type}” and its notes will be removed from your list.`, [["Cancel", ""], ["Remove", "primary"]]);
+      if (a !== "Remove") return;
+      S.saved = await call("remove_saved", key) || S.saved; updateStatus(); renderSaved();
+    };
+  });
+  wireImages(el);
+}
 
 /* ---------- trends page ---------- */
 function renderTrends() {
@@ -1227,6 +1374,7 @@ function paintMomentum(full = false) {
         ${chips("mo-rng", [["all", "All"], ["30", "30 days"], ["7", "7 days"]], MOM.range)}
         <button class="btn sm" id="mo-tbl" title="Show the numbers as a table">${ICON.table} Table</button>
       </div>
+      ${!autoOn && n < 12 ? `<div class="mo-tipbar"><span><b>Tip:</b> turn on automatic scans and this chart fills in by itself.</span><button class="btn sm primary" id="mo-auto2">Scan every 6 hours</button></div>` : ""}
       <div class="mo-legend" id="mo-legend"></div>
       <div class="mo-chart" id="mo-chart"></div>
       <div class="mo-slider">
@@ -1245,6 +1393,8 @@ function paintMomentum(full = false) {
       if (btn) btn.onclick = async () => { S.state.settings = await call("save_settings", { auto_scan_hours: 6 }) || S.state.settings; updateStatus(); btn.remove(); toast("Automatic scans are on: every 6 hours.", "ok"); };
     } else {
       wireChips("mo-rng", v => { momStop(); MOM.range = v; MOM.idx = null; paintMomentum(true); });
+      const a2 = $("#mo-auto2");
+      if (a2) a2.onclick = async () => { S.state.settings = await call("save_settings", { auto_scan_hours: 6 }) || S.state.settings; updateStatus(); a2.closest(".mo-tipbar").remove(); toast("Automatic scans are on: every 6 hours.", "ok"); };
       $("#mo-tbl").onclick = () => { MOM.table = !MOM.table; $("#mo-table").style.display = MOM.table ? "block" : "none"; momTable(); };
       const r = $("#mo-range");
       r.oninput = () => { momStop(); momSetIdx(+r.value); };
@@ -1317,7 +1467,7 @@ function momChart() {
   for (let j = 0; j <= Math.round(top / step); j++) {
     const v = step * j, yy = y(v);
     g += `<line class="${j ? "gl" : "base"}" x1="${P.l}" x2="${W - P.r}" y1="${yy}" y2="${yy}"/>`;
-    g += `<text x="${P.l - 8}" y="${yy + 4}" text-anchor="end">${esc(momPct(v).replace(/\.0+%$/, "%"))}</text>`;
+    g += `<text x="${P.l - 8}" y="${yy + 4}" text-anchor="end">${+(v.toPrecision(3))}%</text>`;
   }
   // date ticks: about one every 110px, never two on the same day label
   const want = Math.max(2, Math.floor((W - P.l - P.r) / 110));
@@ -1338,6 +1488,7 @@ function momChart() {
     let d = "";
     for (let i = a; i <= b; i++) d += `${i === a ? "M" : "L"}${x(i).toFixed(1)},${y(s.v[i]).toFixed(1)}`;
     g += `<path class="ln" d="${d}" stroke="${momColor(k, s.key)}"/>`;
+    if (b - a <= 40) for (let i = a; i <= b; i++) g += `<circle cx="${x(i).toFixed(1)}" cy="${y(s.v[i]).toFixed(1)}" r="3" fill="${momColor(k, s.key)}" stroke="var(--card)" stroke-width="1.5"/>`;
   });
   // everything after the slider point is dimmed, so "back then" reads clearly
   const cx = x(i0);
@@ -1365,6 +1516,8 @@ function momChart() {
       `<div class="r"><i style="background:${momColor(k, s.key)}"></i><span>${esc(k === "themes" ? title(s.name) : s.name)}</span><b>${momPct(v)}</b><em>${momDeltaHtml(ch)}</em></div>`).join("");
     const tw = tip.offsetWidth || 220;
     tip.style.left = (cx + 14 + tw < W - 4 ? cx + 14 : Math.max(4, cx - 14 - tw)) + "px";
+    const avgY = sel.reduce((t, s) => t + y(s.v[i0]), 0) / Math.max(1, sel.length);
+    tip.style.top = avgY < (H - P.b) / 2 ? Math.max(8, H - P.b - tip.offsetHeight - 8) + "px" : "8px";
   }
   const when = $("#mo-when"); if (when) when.textContent = momFmtDate(i0, true);
   const pos = $("#mo-pos"); if (pos) pos.textContent = i0 === b ? "Latest scan" : `${ago(momPts()[i0])}`;
@@ -1470,6 +1623,8 @@ function renderSettings() {
   <div class="card"><div class="card-h">App</div><div class="card-b">
     <div class="field">${toggle("t-tray", "Keep running in the tray when I close the window", "Right-click the tray icon to open the app, scan, or quit.", s.close_to_tray)}</div>
     <div class="field">${toggle("t-report", "Open the full report in my browser after each scan", "", s.open_report)}</div>
+    <div class="field flex"><div><label>Quit the app</label><p class="hint" style="margin:0">Closes UGC Trend Finder completely, including the tray icon. Shortcut: Ctrl+Q.</p></div>
+      <button class="btn sm danger" id="b-quit" style="margin-left:auto">Quit app</button></div>
     ${st.frozen ? "" : `<div class="field"><label>Desktop shortcut</label><p class="hint">Adds a UGC Trend Finder icon to your desktop.</p>
       <button class="btn" id="b-short">Create desktop shortcut</button></div>`}
   </div></div>
@@ -1504,6 +1659,7 @@ function renderSettings() {
   };
   $("#b-chg").onclick = async () => { const d = await call("change_folder"); if (d) { S.state.settings.out_dir = d; $("#outdir").textContent = d; S.currentId = null; S.current = null; await refreshState(); } };
   $("#b-open").onclick = () => call("open_folder");
+  $("#b-quit").onclick = () => call("quit_app");
 }
 
 /* ---------- help ---------- */
@@ -1514,7 +1670,9 @@ function renderHelp() {
     ["Demand and competition", "A theme scores demand when its items sit high in the bestseller lists. Roblox doesn't share exact sales numbers, so ranking position is the signal. Competition is how often the theme shows up in the newest uploads. High demand with few new uploads is where the chances are."],
     ["Proven combo vs. open gap", "A proven combo already sells as that item type, so buyers clearly want it. An open gap is a theme that's hot on other item types but barely exists as this one yet."],
     ["Momentum and “since last scan”", "Momentum compares today's sales with the weekly average; above 1× means rising. “Since last scan” shows how a theme's rank moved compared with your previous scan."],
-    ["Tray, automatic scans and updates", "Closing the window keeps the app in the system tray (next to the clock). Right-click the tray icon to open it, scan, or quit. With automatic scans on, it scans on schedule and notifies you. New versions install themselves."],
+    ["Tray, automatic scans and updates", "Closing the window keeps the app in the system tray (next to the clock). Right-click the tray icon to open it, scan, or quit. With automatic scans on, it scans on schedule and notifies you. When a new version is out, the app tells you and you choose when to update."],
+    ["My list", "Press “Save to my list” on any idea to keep it. Give each one a status (To do, Making, Uploaded, Skipped) and your own notes, and see at a glance whether its theme is still trending in your latest scan."],
+    ["Momentum", "Every scan is a point in time. The Momentum page charts how much of all bestseller activity a theme or item holds across your scans. Drag the slider to see how it was doing at any moment. Automatic scans make this chart fill in by itself."],
     ["Keyboard shortcuts", "Ctrl+N new scan · Ctrl+1 to Ctrl+6 switch pages · Ctrl+R open the full report · Ctrl+Q quit."],
     ["Keep in mind", "These are data-backed ideas, not guaranteed sales. New trends take a few days to show up. Always check the example items first, and never copy other creators' designs or use brands and characters you don't own. That gets items taken down."],
   ];
@@ -1558,14 +1716,14 @@ function updateProgress(ev) {
 
 /* ---------- keys & timers ---------- */
 document.addEventListener("keydown", e => {
-  if (!e.ctrlKey || e.target.tagName === "INPUT") return;
+  if (!e.ctrlKey || e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
   const k = e.key.toLowerCase();
   if (k === "n") { e.preventDefault(); show("scan"); }
   else if (k === "r") { e.preventDefault(); if (S.currentId) call("open_report", S.currentId); }
   else if (k === "q") { e.preventDefault(); call("quit_app"); }
   else if (/^[1-6]$/.test(k)) { e.preventDefault(); show(PAGES[+k - 1][0]); }
 });
-document.addEventListener("contextmenu", e => { if (!e.target.closest(".selectable, pre, input")) e.preventDefault(); });
+document.addEventListener("contextmenu", e => { if (!e.target.closest(".selectable, pre, input, textarea")) e.preventDefault(); });
 setInterval(() => { if (S.run.running) paintProgress(); }, 500);
 setInterval(updateStatus, 5000);
 

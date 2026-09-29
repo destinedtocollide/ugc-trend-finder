@@ -1,0 +1,1815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UGC Trend Finder</title>
+<style>
+:root, [data-theme="midnight"] {
+  --bg: #0f1115; --side: #13161b; --card: #181b21; --card2: #1e222a; --soft: #232731; --soft2: #2b303b;
+  --line: #262a33; --line2: #343a46; --ink: #e8eaee; --ink2: #b8bec9; --muted: #7f8795;
+  --accent: #4a86f0; --accent2: #6d9ff6; --accent-deep: #3d78e6; --accent-dim: #1a2538; --accent-line: #2a3c5c;
+  --accent-rgb: 74,134,240; --on-accent: #ffffff; --chip-on-bg: #e8eaee; --chip-on-ink: #111318;
+  --log-bg: #111318; --img1: #252b36; --img2: #171a20; --ph: #3a414d; --nav-hover: #1a1e25; --switch-off: #3a404c;
+  --thumb: #2b303a; --thumb-h: #3a414e; --overlay: rgba(6,8,11,.62); --shadow: rgba(0,0,0,.45); --rank-bg: rgba(15,17,21,.75);
+  --ok: #4fd08a; --ok-bg: rgba(79,208,138,.12); --gap: #a98bfa; --gap-bg: rgba(169,139,250,.13);
+  --warn: #f2bb4a; --warn-bg: rgba(242,187,74,.12); --danger: #f27878; --danger-bg: rgba(242,120,120,.12);
+  --r: 12px; --r-sm: 8px;
+  --font: "Segoe UI Variable Text", "Segoe UI", Inter, system-ui, -apple-system, sans-serif;
+  --font-d: "Segoe UI Variable Display", "Segoe UI", Inter, system-ui, sans-serif;
+  --mono: "Cascadia Mono", Consolas, ui-monospace, monospace;
+  color-scheme: dark;
+}
+[data-theme="sakura"] {
+  --bg: #151015; --side: #1a1219; --card: #211720; --card2: #2a1d28; --soft: #2e2130; --soft2: #3a2a3b;
+  --line: #332532; --line2: #45323f; --ink: #f7ecf2; --ink2: #dcc2d2; --muted: #a3879b;
+  --accent: #ff5fa2; --accent2: #ff8cc0; --accent-deep: #f0458f; --accent-dim: #3b1a2d; --accent-line: #5c2a46;
+  --accent-rgb: 255,95,162; --on-accent: #ffffff; --chip-on-bg: #ffd3e6; --chip-on-ink: #2a0f1d;
+  --log-bg: #120c12; --img1: #36222f; --img2: #1c131b; --ph: #5a3f52; --nav-hover: #241823; --switch-off: #4a3646;
+  --thumb: #3a2a37; --thumb-h: #4d3848; --rank-bg: rgba(26,18,25,.78); --gap: #c9a2ff;
+}
+[data-theme="emerald"] {
+  --bg: #0d1311; --side: #111815; --card: #151e1a; --card2: #1b2621; --soft: #1f2b25; --soft2: #283630;
+  --line: #22302a; --line2: #2f3f37; --ink: #e6efe9; --ink2: #b6c8bd; --muted: #7b9186;
+  --accent: #2fbf7f; --accent2: #55d69b; --accent-deep: #23a86c; --accent-dim: #13291f; --accent-line: #1f4a35;
+  --accent-rgb: 47,191,127; --on-accent: #ffffff; --chip-on-bg: #e6efe9; --chip-on-ink: #0d1311;
+  --log-bg: #0b100e; --img1: #1f2c26; --img2: #121a16; --ph: #36483f; --nav-hover: #16201b; --switch-off: #34443c;
+  --thumb: #283630; --thumb-h: #35463e; --rank-bg: rgba(13,19,17,.78);
+}
+[data-theme="sunset"] {
+  --bg: #14100d; --side: #1a1511; --card: #211a15; --card2: #2a211b; --soft: #2e241d; --soft2: #3a2e25;
+  --line: #33291f; --line2: #45382c; --ink: #f4ede7; --ink2: #d6c6b9; --muted: #9e8c7e;
+  --accent: #ff8a3d; --accent2: #ffa66b; --accent-deep: #f07424; --accent-dim: #3a2415; --accent-line: #5c3a20;
+  --accent-rgb: 255,138,61; --on-accent: #ffffff; --chip-on-bg: #f4ede7; --chip-on-ink: #1a1511;
+  --log-bg: #110d0a; --img1: #33271e; --img2: #1b1511; --ph: #54433a; --nav-hover: #231c16; --switch-off: #4a3c31;
+  --thumb: #3a2e25; --thumb-h: #4b3c30; --rank-bg: rgba(26,21,17,.78);
+}
+[data-theme="violet"] {
+  --bg: #100f16; --side: #15131d; --card: #1b1925; --card2: #22202e; --soft: #262335; --soft2: #302c42;
+  --line: #2a2738; --line2: #38344a; --ink: #ece9f6; --ink2: #c3bdd9; --muted: #8a84a3;
+  --accent: #8b6cff; --accent2: #a78fff; --accent-deep: #7657f0; --accent-dim: #231d3d; --accent-line: #3b2f6b;
+  --accent-rgb: 139,108,255; --on-accent: #ffffff; --chip-on-bg: #ece9f6; --chip-on-ink: #15131d;
+  --log-bg: #0e0d14; --img1: #2a2638; --img2: #17151f; --ph: #463f5c; --nav-hover: #1d1a28; --switch-off: #3d3852;
+  --thumb: #302c42; --thumb-h: #3e3955; --rank-bg: rgba(21,19,29,.78); --gap: #e59bff;
+}
+[data-theme="graphite"] {
+  --bg: #111111; --side: #161616; --card: #1c1c1c; --card2: #232323; --soft: #272727; --soft2: #313131;
+  --line: #2a2a2a; --line2: #3a3a3a; --ink: #ededed; --ink2: #c2c2c2; --muted: #8a8a8a;
+  --accent: #e8e8e8; --accent2: #ffffff; --accent-deep: #cfcfcf; --accent-dim: #2c2c2c; --accent-line: #444444;
+  --accent-rgb: 232,232,232; --on-accent: #111111; --chip-on-bg: #ededed; --chip-on-ink: #111111;
+  --log-bg: #0e0e0e; --img1: #2a2a2a; --img2: #171717; --ph: #444444; --nav-hover: #1f1f1f; --switch-off: #3d3d3d;
+  --thumb: #333333; --thumb-h: #444444; --rank-bg: rgba(17,17,17,.78);
+}
+[data-theme="daylight"] {
+  --bg: #f4f5f8; --side: #ffffff; --card: #ffffff; --card2: #f3f5f8; --soft: #eef0f4; --soft2: #e3e7ee;
+  --line: #e3e6eb; --line2: #d2d7df; --ink: #1a1d23; --ink2: #454c58; --muted: #7a828f;
+  --accent: #3b7cf0; --accent2: #5a93f5; --accent-deep: #2f6de0; --accent-dim: #e5eefe; --accent-line: #c8dafc;
+  --accent-rgb: 59,124,240; --on-accent: #ffffff; --chip-on-bg: #1a1d23; --chip-on-ink: #ffffff;
+  --log-bg: #f3f5f8; --img1: #ffffff; --img2: #e8ebf0; --ph: #b7bec9; --nav-hover: #f1f3f6; --switch-off: #cbd1da;
+  --thumb: #cfd4dc; --thumb-h: #b7bec9; --overlay: rgba(20,24,32,.35); --shadow: rgba(20,24,32,.16); --rank-bg: rgba(255,255,255,.88);
+  --ok: #16a34a; --ok-bg: rgba(22,163,74,.1); --gap: #7c5cdb; --gap-bg: rgba(124,92,219,.1);
+  --warn: #b7791f; --warn-bg: rgba(183,121,31,.1); --danger: #dc2626; --danger-bg: rgba(220,38,38,.08);
+  color-scheme: light;
+}
+[data-theme="blossom"] {
+  --bg: #fdf4f8; --side: #fff8fb; --card: #ffffff; --card2: #fdf2f7; --soft: #fbe7f0; --soft2: #f6d6e5;
+  --line: #f4dfe9; --line2: #eac7d8; --ink: #2a1520; --ink2: #5c3a4b; --muted: #9a7385;
+  --accent: #e0448a; --accent2: #ea6aa3; --accent-deep: #c9347a; --accent-dim: #fde3ef; --accent-line: #f6bcd6;
+  --accent-rgb: 224,68,138; --on-accent: #ffffff; --chip-on-bg: #e0448a; --chip-on-ink: #ffffff;
+  --log-bg: #fdf2f7; --img1: #ffffff; --img2: #fbe9f1; --ph: #e2b6ca; --nav-hover: #fcecf3; --switch-off: #ecc9d9;
+  --thumb: #efc9da; --thumb-h: #e2abc4; --overlay: rgba(60,20,40,.3); --shadow: rgba(120,40,80,.14); --rank-bg: rgba(255,255,255,.9);
+  --ok: #16a34a; --ok-bg: rgba(22,163,74,.1); --gap: #8b5cf6; --gap-bg: rgba(139,92,246,.1);
+  --warn: #b7791f; --warn-bg: rgba(183,121,31,.1); --danger: #dc2626; --danger-bg: rgba(220,38,38,.08);
+  color-scheme: light;
+}
+body, .side, .card, .stat, .btn, .chip, .nav button, .idea, .item, .input, .path, .status { transition: background-color .25s, border-color .25s, color .25s; }
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 14px/1.5 var(--font); -webkit-font-smoothing: antialiased;
+  overflow: hidden; user-select: none; }
+button { font: inherit; color: inherit; }
+a { color: var(--accent2); text-decoration: none; }
+a:hover { text-decoration: underline; }
+::selection { background: rgba(var(--accent-rgb), .3); }
+.selectable { user-select: text; }
+
+/* scrollbars */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--thumb); border-radius: 10px; border: 3px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: var(--thumb-h); border: 3px solid transparent; background-clip: padding-box; }
+
+/* layout */
+.app { display: grid; grid-template-columns: 232px 1fr; height: 100vh; }
+.side { background: var(--side); border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; padding: 18px 12px 14px; }
+.brand { display: flex; align-items: center; gap: 11px; padding: 2px 6px 20px; }
+.logo { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(145deg, var(--accent2), var(--accent-deep)); color: var(--on-accent);
+  display: grid; place-items: center; box-shadow: 0 4px 14px rgba(var(--accent-rgb),.25); flex: none; }
+.brand b { display: block; font: 600 15px/1.2 var(--font-d); }
+.brand span { font-size: 12px; color: var(--muted); }
+.nav { display: flex; flex-direction: column; gap: 2px; }
+.nav button { display: flex; align-items: center; gap: 12px; width: 100%; padding: 9px 12px; border: 0; border-radius: 9px;
+  background: transparent; color: var(--ink2); cursor: pointer; text-align: left; transition: background .15s, color .15s; }
+.nav button:hover { background: var(--nav-hover); color: var(--ink); }
+.nav button.active { background: var(--accent-dim); color: var(--ink); font-weight: 600; }
+.nav button.active svg { color: var(--accent2); }
+.nav svg { width: 18px; height: 18px; flex: none; }
+.nav .badge { margin-left: auto; font-size: 11px; font-weight: 600; background: var(--accent); color: var(--on-accent); border-radius: 99px; padding: 0 7px; }
+.side .grow { flex: 1; }
+.status { margin-top: 12px; background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 12px; }
+.status .row { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); padding: 2px 0; }
+.status .row b { color: var(--ink); font-weight: 600; }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--ok); margin-right: 7px; vertical-align: 1px; }
+.dot.busy { background: var(--accent2); animation: pulse 1.2s infinite; }
+@keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(var(--accent-rgb),.35); } 50% { box-shadow: 0 0 0 5px transparent; } }
+.mini-bar { height: 4px; background: var(--soft); border-radius: 4px; margin: 8px 0 2px; overflow: hidden; display: none; }
+.mini-bar i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 4px; transition: width .4s; }
+.status .btn { width: 100%; margin-top: 10px; }
+
+.main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.header { display: flex; align-items: center; gap: 16px; padding: 20px 28px 16px; border-bottom: 1px solid var(--line); flex: none; }
+.header h1 { margin: 0; font: 600 21px/1.25 var(--font-d); letter-spacing: -.01em; }
+.header p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+.header .actions { margin-left: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.scroll { flex: 1; overflow-y: auto; overflow-x: hidden; scroll-behavior: smooth; }
+.page { display: none; padding: 22px 28px 32px; max-width: 1500px; }
+.page.active { display: block; animation: fade .18s ease-out; }
+@keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+/* controls */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 36px; padding: 0 16px; border-radius: 9px;
+  border: 1px solid var(--line2); background: var(--soft); color: var(--ink); cursor: pointer; font-weight: 500; white-space: nowrap;
+  transition: background .15s, border-color .15s, transform .08s, box-shadow .15s; }
+.btn:hover { background: var(--soft2); }
+.btn:active { transform: translateY(1px); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
+.btn.primary:hover { background: var(--accent2); border-color: var(--accent2); box-shadow: 0 4px 16px rgba(var(--accent-rgb),.25); }
+.btn.danger { color: var(--danger); }
+.btn.danger:hover { background: var(--danger-bg); border-color: rgba(242,120,120,.35); }
+.btn.sm { height: 30px; padding: 0 12px; font-size: 13px; border-radius: 8px; }
+.btn.lg { height: 42px; padding: 0 22px; font-size: 15px; }
+.btn:disabled { opacity: .45; cursor: default; transform: none; box-shadow: none; }
+.btn svg { width: 16px; height: 16px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { height: 34px; padding: 0 15px; border-radius: 99px; border: 1px solid var(--line2); background: transparent; color: var(--ink2);
+  cursor: pointer; transition: all .15s; }
+.chip:hover { background: var(--soft); color: var(--ink); }
+.chip.on { background: var(--chip-on-bg); border-color: var(--chip-on-bg); color: var(--chip-on-ink); font-weight: 600; }
+.chip:disabled { opacity: .45; cursor: default; }
+.toggle { display: flex; gap: 14px; align-items: flex-start; cursor: pointer; padding: 4px 0; }
+.toggle .sw { width: 40px; height: 23px; border-radius: 99px; background: var(--switch-off); position: relative; flex: none; margin-top: 1px; transition: background .2s; }
+.toggle .sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 17px; height: 17px; border-radius: 50%; background: #fff;
+  transition: transform .2s cubic-bezier(.3,.7,.4,1); box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+.toggle.on .sw { background: var(--accent); }
+[data-theme="graphite"] .toggle.on .sw::after { background: #111; }
+.toggle.on .sw::after { transform: translateX(17px); }
+.toggle.disabled { opacity: .45; cursor: default; }
+.toggle b { font-weight: 500; display: block; }
+.toggle small { color: var(--muted); font-size: 12.5px; }
+.input { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-radius: 9px; background: var(--soft);
+  border: 1px solid var(--line2); transition: border-color .15s, box-shadow .15s; }
+.input:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(var(--accent-rgb),.18); }
+.input input { border: 0; outline: 0; background: transparent; color: var(--ink); font: inherit; width: 200px; }
+.input input::placeholder { color: var(--muted); }
+.input svg { width: 15px; height: 15px; color: var(--muted); flex: none; }
+
+/* dropdown */
+.dd { position: relative; }
+.dd-menu { position: absolute; right: 0; top: calc(100% + 6px); min-width: 100%; max-height: 360px; overflow-y: auto; z-index: 30;
+  background: var(--card); border: 1px solid var(--line2); border-radius: 10px; padding: 5px; box-shadow: 0 14px 40px var(--shadow);
+  display: none; }
+.dd.open .dd-menu { display: block; animation: fade .12s ease-out; }
+.dd-menu button { display: block; width: 100%; text-align: left; padding: 8px 12px; border: 0; background: none; border-radius: 7px;
+  cursor: pointer; white-space: nowrap; color: var(--ink2); }
+.dd-menu button:hover { background: var(--soft); color: var(--ink); }
+.dd-menu button.sel { color: var(--accent2); font-weight: 600; }
+.chev { width: 14px; height: 14px; transition: transform .15s; }
+.dd.open .chev { transform: rotate(180deg); }
+
+/* cards */
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); }
+.card + .card { margin-top: 14px; }
+.card-h { padding: 16px 20px 0; font-size: 11.5px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+.card-b { padding: 14px 20px 20px; }
+.field + .field { margin-top: 20px; }
+.field > label { display: block; font-weight: 600; margin-bottom: 3px; }
+.field > .hint { color: var(--muted); font-size: 12.5px; margin: 0 0 10px; }
+.sec-title { display: flex; align-items: baseline; gap: 10px; margin: 26px 0 12px; }
+.sec-title h2 { margin: 0; font: 600 16px/1.3 var(--font-d); }
+.sec-title span { color: var(--muted); font-size: 13px; }
+.sec-title:first-child { margin-top: 0; }
+
+/* scan progress */
+.prog-top { display: flex; align-items: center; gap: 12px; }
+.prog-top .state { font: 600 16px/1.3 var(--font-d); }
+.prog-top .pct { margin-left: auto; font: 600 16px/1 var(--font-d); color: var(--accent2); font-variant-numeric: tabular-nums; }
+.spinner { width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid var(--soft2); border-top-color: var(--accent2);
+  animation: spin .8s linear infinite; display: none; flex: none; }
+.running .spinner { display: block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.bar { height: 10px; background: var(--soft); border-radius: 99px; overflow: hidden; margin: 14px 0 16px; position: relative; }
+.bar i { position: absolute; inset: 0 auto 0 0; width: 0; background: linear-gradient(90deg, var(--accent-deep), var(--accent2)); border-radius: 99px;
+  transition: width .6s cubic-bezier(.3,.7,.4,1); overflow: hidden; }
+.running .bar i::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.28), transparent);
+  animation: shimmer 1.6s infinite; transform: translateX(-100%); }
+@keyframes shimmer { to { transform: translateX(100%); } }
+.waiting .bar i { background: repeating-linear-gradient(-45deg, #b98a2a 0 8px, #d8a53c 8px 16px); background-size: 22px 22px; animation: stripes .8s linear infinite; }
+.waiting .bar i::after { display: none; }
+@keyframes stripes { to { background-position: 22px 0; } }
+.stats4 { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; }
+.stat { background: var(--card2); border-radius: 10px; padding: 11px 14px; min-width: 0; }
+.stat span { display: block; color: var(--muted); font-size: 12px; }
+.stat b { display: block; font: 600 16px/1.35 var(--font-d); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stat b.small { font-size: 13.5px; font-weight: 600; }
+.wait-box { display: none; margin-top: 12px; padding: 11px 14px; border-radius: 10px; background: var(--warn-bg); color: var(--warn); font-size: 13px; }
+.waiting .wait-box { display: flex; gap: 10px; align-items: center; }
+.pulse-line { margin-top: 12px; color: var(--muted); font-size: 12.5px; display: flex; align-items: center; gap: 8px; min-height: 18px; }
+details.log { margin-top: 14px; }
+details.log summary { cursor: pointer; color: var(--muted); font-size: 13px; list-style: none; display: inline-flex; gap: 6px; align-items: center; }
+details.log summary::-webkit-details-marker { display: none; }
+details.log[open] summary .chev { transform: rotate(180deg); }
+details.log pre { margin: 10px 0 0; max-height: 220px; overflow: auto; padding: 12px 14px; background: var(--log-bg); border: 1px solid var(--line);
+  border-radius: 10px; font: 12px/1.55 var(--mono); color: var(--ink2); white-space: pre-wrap; user-select: text; }
+.result-box { display: none; margin-top: 14px; padding: 12px 14px; border-radius: 10px; font-size: 13.5px; align-items: center; gap: 12px; }
+.result-box.ok { display: flex; background: var(--ok-bg); color: var(--ok); }
+.result-box.err { display: flex; background: var(--danger-bg); color: var(--danger); }
+.result-box .btn { margin-left: auto; }
+
+/* ideas */
+.stats-row { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; margin-bottom: 8px; }
+.stats-row .stat { background: var(--card); border: 1px solid var(--line); padding: 14px 16px; }
+.stats-row .stat b { font-size: 20px; }
+.strip { display: grid; grid-auto-flow: column; grid-auto-columns: 158px; gap: 12px; overflow-x: auto; padding-bottom: 8px; scroll-snap-type: x proximity; }
+.item { position: relative; background: var(--card); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; cursor: pointer; scroll-snap-align: start;
+  transition: border-color .15s, transform .15s; }
+.item:hover { border-color: var(--line2); transform: translateY(-2px); }
+.item .img { aspect-ratio: 1; }
+.item .meta { padding: 9px 11px 11px; }
+.item .meta b { display: block; font-size: 12.5px; font-weight: 600; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.item .meta span { font-size: 11.5px; color: var(--muted); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.item .rank { position: absolute; top: 8px; left: 8px; font-size: 11px; font-weight: 700; background: var(--rank-bg); color: var(--ink);
+  border-radius: 6px; padding: 1px 7px; backdrop-filter: blur(4px); }
+.img { position: relative; background: radial-gradient(circle at 50% 40%, var(--img1), var(--img2) 72%); display: grid; place-items: center; overflow: hidden; }
+.img img { width: 88%; height: 88%; object-fit: contain; opacity: 0; transition: opacity .3s, transform .3s; }
+.img img.loaded { opacity: 1; }
+.img .ph { position: absolute; color: var(--ph); }
+.img .ph svg { width: 34px; height: 34px; }
+.img img.loaded + .ph { display: none; }
+.ideas { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 14px; }
+.idea { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; display: flex; flex-direction: column;
+  transition: border-color .15s; }
+.idea:hover { border-color: var(--line2); }
+.idea-top { display: grid; grid-template-columns: 132px 1fr; gap: 16px; padding: 16px 16px 0; }
+.idea-top .img { border-radius: 10px; aspect-ratio: 1; cursor: zoom-in; }
+.idea-top .img:hover img.loaded { transform: scale(1.05); }
+.idea-h { min-width: 0; display: flex; flex-direction: column; }
+.idea-h .t { display: flex; gap: 10px; align-items: flex-start; }
+.num { flex: none; width: 26px; height: 26px; border-radius: 7px; background: var(--accent-dim); color: var(--accent2); display: grid; place-items: center;
+  font-weight: 700; font-size: 13px; }
+.idea-h h3 { margin: 0; font: 600 16.5px/1.3 var(--font-d); flex: 1; min-width: 0; }
+.idea-h h3 span { color: var(--muted); font-weight: 400; }
+.score { text-align: right; flex: none; }
+.score b { display: block; font: 700 22px/1 var(--font-d); color: var(--accent2); }
+.score span { font-size: 10.5px; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 0; }
+.tag { font-size: 12px; padding: 2px 9px; border-radius: 99px; background: var(--soft); color: var(--ink2); white-space: nowrap; font-weight: 500; }
+.tag.ok { background: var(--ok-bg); color: var(--ok); }
+.tag.gap { background: var(--gap-bg); color: var(--gap); }
+.tag.warn { background: var(--warn-bg); color: var(--warn); }
+.facts { display: flex; gap: 22px; flex-wrap: wrap; margin-top: auto; padding-top: 12px; }
+.facts span { display: block; font-size: 11.5px; color: var(--muted); }
+.facts b { font-weight: 600; }
+.swatches { display: flex; gap: 10px; flex-wrap: wrap; }
+.sw-item { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; font-size: 13px; }
+.sw-item i { display: inline-block; flex: none; margin-right: 1px; width: 11px; height: 11px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(255,255,255,.18); }
+.idea-b { padding: 14px 16px 16px; display: flex; flex-direction: column; flex: 1; }
+.lbl { font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); margin: 4px 0 6px; }
+.reasons { margin: 0 0 12px; padding: 0; list-style: none; }
+.reasons li { position: relative; padding-left: 16px; color: var(--ink2); font-size: 13.5px; margin: 4px 0; }
+.reasons li::before { content: ""; position: absolute; left: 2px; top: 8px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+.examples { display: grid; gap: 6px; margin-bottom: 14px; }
+.ex { display: flex; align-items: center; gap: 10px; padding: 5px; border-radius: 9px; cursor: pointer; transition: background .15s; min-width: 0; }
+.ex:hover { background: var(--card2); }
+.ex .img { width: 40px; height: 40px; border-radius: 8px; flex: none; }
+.ex .img .ph svg { width: 16px; height: 16px; }
+.ex div { min-width: 0; }
+.ex b { display: block; font-weight: 500; font-size: 13.5px; color: var(--accent2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ex span { font-size: 12px; color: var(--muted); }
+.idea-f { margin-top: auto; display: flex; gap: 8px; }
+
+/* tables */
+.table-wrap { overflow: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+th { position: sticky; top: 0; background: var(--card); z-index: 1; text-align: left; font-size: 11px; font-weight: 600; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--muted); padding: 13px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 11px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+tbody tr { transition: background .12s; }
+tbody tr:hover { background: var(--card2); }
+tbody tr.click { cursor: pointer; }
+td.c, th.c { text-align: center; }
+td.wrap { white-space: normal; min-width: 120px; }
+.row-actions .btn { padding: 0 10px; }
+td.num-c { color: var(--muted); font-variant-numeric: tabular-nums; width: 40px; }
+.opp { display: flex; align-items: center; gap: 10px; }
+.opp i { display: block; width: 90px; height: 6px; background: var(--soft); border-radius: 6px; overflow: hidden; flex: none; }
+.opp i b { display: block; height: 100%; background: var(--accent); border-radius: 6px; }
+.opp.great i b { background: var(--ok); }
+.up { color: var(--ok); font-weight: 600; }
+.down { color: var(--danger); font-weight: 600; }
+.pill { font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 99px; }
+.pill.Low { background: var(--ok-bg); color: var(--ok); }
+.pill.Medium { background: var(--warn-bg); color: var(--warn); }
+.pill.High { background: var(--danger-bg); color: var(--danger); }
+.row-actions { display: flex; gap: 6px; justify-content: flex-end; opacity: .85; }
+.muted { color: var(--muted); }
+
+/* empty state */
+.empty { text-align: center; padding: 70px 20px; color: var(--muted); }
+.empty .ic { width: 58px; height: 58px; border-radius: 16px; margin: 0 auto 16px; background: var(--card); border: 1px solid var(--line);
+  display: grid; place-items: center; color: var(--accent2); }
+.empty .ic svg { width: 26px; height: 26px; }
+.empty h3 { color: var(--ink); margin: 0 0 4px; font: 600 17px var(--font-d); }
+.empty p { margin: 0 0 18px; }
+
+/* skeleton */
+.skel { background: linear-gradient(90deg, var(--card) 0, var(--card2) 40%, var(--card) 80%); background-size: 600px 100%;
+  animation: sk 1.2s infinite linear; border-radius: var(--r); }
+@keyframes sk { from { background-position: -300px 0; } to { background-position: 300px 0; } }
+
+/* modal, lightbox, toast */
+.overlay { position: fixed; inset: 0; background: var(--overlay); backdrop-filter: blur(3px); display: none; place-items: center; z-index: 50; padding: 20px; }
+.overlay.show { display: grid; animation: fadeo .15s ease-out; }
+@keyframes fadeo { from { opacity: 0; } to { opacity: 1; } }
+.modal { background: var(--card); border: 1px solid var(--line2); border-radius: 14px; width: min(440px, 100%); padding: 22px 24px 20px;
+  box-shadow: 0 30px 80px var(--shadow); animation: pop .18s cubic-bezier(.3,.7,.4,1); }
+@keyframes pop { from { transform: scale(.96); opacity: 0; } to { transform: none; opacity: 1; } }
+.modal h3 { margin: 0 0 6px; font: 600 17px var(--font-d); }
+.modal p { margin: 0 0 20px; color: var(--ink2); }
+.modal .btns { display: flex; justify-content: flex-end; gap: 8px; }
+.upd-bar { height: 8px; background: var(--soft); border-radius: 99px; overflow: hidden; margin: 4px 0 8px; }
+.upd-bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+.lightbox { background: var(--card); border: 1px solid var(--line2); border-radius: 16px; width: min(560px, 100%); overflow: hidden;
+  box-shadow: 0 30px 80px var(--shadow); animation: pop .18s cubic-bezier(.3,.7,.4,1); }
+.lightbox .img { aspect-ratio: 1; max-height: 62vh; width: 100%; }
+.lightbox .img img { width: 82%; height: 82%; }
+.lightbox .lb-b { padding: 16px 20px 18px; display: flex; align-items: center; gap: 12px; }
+.lightbox .lb-b b { display: block; font: 600 16px var(--font-d); }
+.lightbox .lb-b span { color: var(--muted); font-size: 13px; }
+.lightbox .lb-b .btn { margin-left: auto; }
+.toasts { position: fixed; right: 22px; bottom: 22px; display: flex; flex-direction: column; gap: 8px; z-index: 60; }
+.toast { background: var(--card2); border: 1px solid var(--line2); border-radius: 10px; padding: 11px 16px; box-shadow: 0 12px 30px var(--shadow);
+  max-width: 360px; font-size: 13.5px; animation: pop .2s cubic-bezier(.3,.7,.4,1); }
+.toast.ok { border-left: 3px solid var(--ok); }
+.toast.err { border-left: 3px solid var(--danger); }
+
+/* launched with the separate loading window: the in-page splash isn't needed, the app fades in */
+[data-launch="managed"] #splash { display: none; }
+[data-launch="managed"] .app { opacity: 0; transform: scale(.955); transform-origin: 50% 45%; }
+[data-launch="managed"] .app.revealed { opacity: 1; transform: none; transition: opacity .42s ease, transform .7s cubic-bezier(.16,1,.3,1); }
+.app.revealed .side { animation: side-in .55s cubic-bezier(.2,.8,.2,1) both; }
+.app.revealed .header { animation: rise .5s .06s cubic-bezier(.2,.8,.2,1) both; }
+.app.revealed .scroll { animation: rise .55s .12s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes side-in { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: none; } }
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+/* splash */
+#splash { position: fixed; inset: 0; z-index: 100; background: var(--bg); display: grid; place-items: center; transition: opacity .45s ease, visibility .45s; }
+#splash.hide { opacity: 0; visibility: hidden; }
+.sp-inner { display: flex; flex-direction: column; align-items: center; gap: 0; transform: translateY(-4%); }
+.sp-logo { width: 92px; height: 92px; border-radius: 26px; background: linear-gradient(145deg, var(--accent2), var(--accent-deep)); color: var(--on-accent);
+  display: grid; place-items: center; box-shadow: 0 18px 50px rgba(var(--accent-rgb),.35); animation: sp-pop .6s cubic-bezier(.2,.9,.3,1.2) both; }
+.sp-logo svg { width: 48px; height: 48px; }
+.sp-logo path { stroke-dasharray: 40; stroke-dashoffset: 40; animation: sp-draw .9s .25s ease-out forwards; }
+@keyframes sp-pop { from { transform: scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes sp-draw { to { stroke-dashoffset: 0; } }
+.sp-name { margin-top: 22px; font: 600 22px var(--font-d); letter-spacing: -.01em; animation: fade .5s .15s both; }
+.sp-sub { color: var(--muted); font-size: 13px; margin-top: 2px; animation: fade .5s .2s both; }
+.sp-bar { width: 240px; height: 6px; border-radius: 99px; background: var(--soft); overflow: hidden; margin-top: 26px; position: relative; }
+.sp-bar i { position: absolute; inset: 0 auto 0 0; width: 6%; border-radius: 99px; background: linear-gradient(90deg, var(--accent-deep), var(--accent2));
+  transition: width .5s cubic-bezier(.3,.7,.4,1); overflow: hidden; }
+.sp-bar i::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
+  animation: shimmer 1.2s infinite; transform: translateX(-100%); }
+.sp-step { margin-top: 12px; color: var(--muted); font-size: 12.5px; min-height: 18px; }
+.sp-ver { position: absolute; bottom: 18px; color: var(--muted); font-size: 12px; opacity: .7; }
+
+/* update popup + pill */
+.upd-pop { position: fixed; right: 22px; bottom: 22px; z-index: 55; width: 360px; background: var(--card); border: 1px solid var(--line2); border-radius: 14px;
+  box-shadow: 0 24px 60px var(--shadow); padding: 18px 18px 16px; display: none; }
+.upd-pop.show { display: block; animation: pop .25s cubic-bezier(.3,.7,.4,1); }
+.upd-pop .top { display: flex; gap: 12px; align-items: flex-start; }
+.upd-pop .ic { width: 38px; height: 38px; border-radius: 10px; background: var(--accent-dim); color: var(--accent2); display: grid; place-items: center; flex: none; }
+.upd-pop .ic svg { width: 20px; height: 20px; }
+.upd-pop h3 { margin: 0; font: 600 15.5px var(--font-d); }
+.upd-pop p { margin: 2px 0 0; color: var(--ink2); font-size: 13px; }
+.upd-pop .notes { margin: 12px 0 0; padding: 10px 12px; background: var(--card2); border-radius: 9px; color: var(--ink2); font-size: 12.5px;
+  max-height: 120px; overflow: auto; white-space: pre-wrap; }
+.upd-pop .btns { display: flex; gap: 8px; margin-top: 14px; justify-content: flex-end; }
+.upd-pop .x { margin-left: auto; background: none; border: 0; color: var(--muted); cursor: pointer; padding: 2px; border-radius: 6px; }
+.upd-pop .x:hover { color: var(--ink); background: var(--soft); }
+.upd-pill { display: none; width: 100%; margin-top: 8px; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--accent-line); background: var(--accent-dim);
+  color: var(--accent2); font-size: 12.5px; font-weight: 600; cursor: pointer; text-align: left; }
+.upd-pill.show { display: flex; align-items: center; gap: 8px; }
+.upd-pill:hover { filter: brightness(1.15); }
+.upd-pill i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent2); animation: pulse 1.4s infinite; }
+.modal .notes { white-space: pre-wrap; background: var(--card2); border-radius: 9px; padding: 10px 12px; font-size: 13px; max-height: 260px; overflow: auto; }
+
+/* theme picker */
+.themes { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.theme { border: 2px solid var(--line); border-radius: 12px; padding: 8px; cursor: pointer; background: var(--card2); transition: border-color .15s, transform .15s; }
+.theme:hover { transform: translateY(-2px); border-color: var(--line2); }
+.theme.on { border-color: var(--accent); }
+.theme .pv { height: 70px; border-radius: 8px; display: grid; grid-template-columns: 30% 1fr; overflow: hidden; }
+.theme .pv .s { padding: 8px 6px; display: flex; flex-direction: column; gap: 5px; }
+.theme .pv .s i { display: block; height: 5px; border-radius: 3px; opacity: .55; }
+.theme .pv .s i:first-child { opacity: 1; }
+.theme .pv .m { padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+.theme .pv .m b { display: block; height: 16px; border-radius: 4px; }
+.theme .pv .m u { display: block; height: 8px; width: 55%; border-radius: 4px; }
+.theme .nm { display: flex; align-items: center; justify-content: space-between; padding: 8px 4px 2px; font-weight: 600; font-size: 13px; }
+.theme .nm span { width: 14px; height: 14px; border-radius: 50%; }
+
+/* help */
+.help { display: grid; gap: 12px; max-width: 880px; }
+.help .card-b h3 { margin: 0 0 4px; font: 600 15px var(--font-d); }
+.help .card-b p { margin: 0; color: var(--ink2); }
+.kbd { font: 12px var(--mono); background: var(--soft); border: 1px solid var(--line2); border-bottom-width: 2px; border-radius: 5px; padding: 0 6px; }
+
+.path { flex: 1; min-width: 0; height: 36px; display: flex; align-items: center; padding: 0 12px; border-radius: 9px; background: var(--soft);
+  border: 1px solid var(--line2); color: var(--ink2); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; user-select: text; }
+.flex { display: flex; gap: 8px; align-items: center; }
+
+/* ---------- momentum charts ---------- */
+:root { --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; }
+[data-theme="daylight"], [data-theme="blossom"] { --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300; }
+.mo-card { padding: 16px 20px 18px; }
+.actions #mo-kind { flex-wrap: nowrap; }
+.actions #c-sv { flex-wrap: nowrap; gap: 6px; }
+.actions #c-sv .chip { height: 30px; padding: 0 12px; font-size: 12.5px; }
+.mo-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.mo-top .when { flex: 1; min-width: 180px; }
+.mo-top .when b { display: block; font: 600 16px/1.3 var(--font-d); font-variant-numeric: tabular-nums; }
+.mo-top .when span { color: var(--muted); font-size: 12.5px; }
+.mo-top .chip { height: 30px; padding: 0 12px; font-size: 12.5px; }
+.mo-legend { display: flex; flex-wrap: wrap; gap: 6px 8px; margin-bottom: 8px; min-height: 28px; }
+.mo-leg { display: inline-flex; align-items: center; gap: 7px; height: 28px; padding: 0 6px 0 10px; border-radius: 99px; background: var(--soft);
+  color: var(--ink); font-size: 12.5px; border: 0; cursor: pointer; max-width: 260px; }
+.mo-leg i { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.mo-leg span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mo-leg u { text-decoration: none; color: var(--muted); width: 18px; height: 18px; display: grid; place-items: center; border-radius: 99px; font-size: 14px; line-height: 1; }
+.mo-leg:hover u { background: var(--soft2); color: var(--ink); }
+.mo-hint { color: var(--muted); font-size: 12.5px; align-self: center; }
+.mo-chart { position: relative; height: 310px; touch-action: none; cursor: crosshair; }
+.mo-chart svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.mo-chart .gl { stroke: var(--line); stroke-width: 1; }
+.mo-chart .base { stroke: var(--line2); stroke-width: 1; }
+.mo-chart text { fill: var(--muted); font: 11.5px var(--font); font-variant-numeric: tabular-nums; }
+.mo-chart text.dl { fill: var(--ink2); font-size: 12px; font-weight: 600; }
+.mo-chart .ln { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.mo-chart .ln.dim { opacity: .28; }
+.mo-chart .future { fill: var(--card); opacity: .62; }
+.mo-chart .cur { stroke: var(--ink2); stroke-width: 1; }
+.mo-chart .dot { stroke: var(--card); stroke-width: 2; }
+.mo-tip { position: absolute; top: 8px; pointer-events: none; background: var(--card2); border: 1px solid var(--line2); border-radius: 10px;
+  padding: 9px 11px; min-width: 190px; max-width: 280px; box-shadow: 0 10px 28px var(--shadow); font-size: 12.5px; transition: left .12s ease-out; }
+.mo-tip .h { color: var(--muted); margin-bottom: 5px; font-size: 12px; }
+.mo-tip .r { display: grid; grid-template-columns: 10px 1fr auto auto; align-items: center; gap: 7px; padding: 2px 0; }
+.mo-tip .r i { width: 10px; height: 10px; border-radius: 3px; }
+.mo-tip .r > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink2); }
+.mo-tip .r b { font-variant-numeric: tabular-nums; color: var(--ink); }
+.mo-tip .r em { font-style: normal; font-size: 11.5px; min-width: 52px; text-align: right; font-variant-numeric: tabular-nums; }
+.mo-slider { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
+.mo-play { width: 32px; height: 32px; border-radius: 99px; border: 1px solid var(--line2); background: var(--soft); display: grid; place-items: center; cursor: pointer; flex: none; }
+.mo-play:hover { background: var(--soft2); }
+.mo-play svg { width: 14px; height: 14px; }
+.mo-range { flex: 1; -webkit-appearance: none; appearance: none; height: 6px; border-radius: 99px; outline: none; cursor: pointer;
+  background: linear-gradient(90deg, var(--accent) var(--fill, 100%), var(--soft2) var(--fill, 100%)); }
+.mo-range::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 99px; background: var(--card);
+  border: 3px solid var(--accent); box-shadow: 0 2px 8px var(--shadow); transition: transform .12s; }
+.mo-range:hover::-webkit-slider-thumb, .mo-range:active::-webkit-slider-thumb { transform: scale(1.15); }
+.mo-range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px rgba(var(--accent-rgb), .3); }
+.mo-pos { color: var(--muted); font-size: 12px; min-width: 92px; text-align: right; font-variant-numeric: tabular-nums; }
+.mo-cols { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; margin-top: 14px; }
+.mo-cols .card + .card { margin-top: 0; }
+.mo-cols .card-h { display: flex; align-items: center; gap: 8px; }
+.mo-cols .card-h small { text-transform: none; letter-spacing: 0; font-weight: 400; margin-left: auto; }
+.mo-list { padding: 8px 10px 10px; }
+.mo-row { display: grid; grid-template-columns: auto minmax(0,1fr) 84px 64px 70px; align-items: center; gap: 10px; padding: 7px 10px;
+  border-radius: 9px; cursor: pointer; border: 1px solid transparent; }
+.mo-row:hover { background: var(--soft); }
+.mo-row.on { border-color: var(--line2); background: var(--card2); }
+.mo-row .mk { width: 12px; height: 12px; border-radius: 4px; border: 1.5px solid var(--line2); }
+.mo-row .img { width: 34px; height: 34px; border-radius: 8px; flex: none; }
+.mo-row .img .ph svg { width: 14px; height: 14px; }
+.mo-row .nm { min-width: 0; }
+.mo-row .nm b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.mo-row .nm span { display: block; color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mo-row .val { text-align: right; font-variant-numeric: tabular-nums; }
+.mo-row .dl { text-align: right; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.mo-row svg { width: 84px; height: 26px; display: block; }
+.mo-row svg path { fill: none; stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
+.mo-none { color: var(--muted); padding: 22px 12px; text-align: center; font-size: 13px; }
+.mo-note { display: flex; gap: 16px; align-items: center; padding: 18px 20px; }
+.mo-note .ic { width: 44px; height: 44px; border-radius: 12px; background: var(--accent-dim); color: var(--accent2); display: grid; place-items: center; flex: none; }
+.mo-note .ic svg { width: 22px; height: 22px; }
+.mo-note div { flex: 1; }
+.mo-note b { display: block; font: 600 15px var(--font-d); }
+.mo-note p { margin: 2px 0 0; color: var(--ink2); }
+.mo-table { margin-top: 14px; max-height: 280px; overflow: auto; border-top: 1px solid var(--line); }
+.mo-table table { font-size: 12.5px; }
+
+/* ---------- my list ---------- */
+textarea { user-select: text; }
+.sv-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; }
+.sv { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: flex; flex-direction: column; gap: 12px; transition: border-color .2s, opacity .2s; }
+.sv:hover { border-color: var(--line2); }
+.sv.skip { opacity: .62; }
+.sv-top { display: grid; grid-template-columns: 76px 1fr; gap: 14px; align-items: start; }
+.sv-top .img { width: 76px; height: 76px; border-radius: 10px; cursor: zoom-in; }
+.sv-top .img .ph svg { width: 22px; height: 22px; }
+.sv-top h3 { margin: 0 0 3px; font: 600 16px/1.3 var(--font-d); }
+.sv-top h3 span { color: var(--muted); font-weight: 400; }
+.sv-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.sv-now { font-size: 12.5px; color: var(--ink2); margin-top: 7px; display: flex; align-items: center; gap: 6px; }
+.sv-now i { width: 7px; height: 7px; border-radius: 99px; background: var(--muted); flex: none; }
+.sv-now.hot i { background: var(--ok); } .sv-now.cool i { background: var(--danger); }
+.seg { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--card2); border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 3px; }
+.seg button { height: 28px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); font-size: 12.5px; cursor: pointer; transition: background .15s, color .15s; }
+.seg button:hover { color: var(--ink); background: var(--soft); }
+.seg button.on { background: var(--soft2); color: var(--ink); font-weight: 600; }
+.seg button.on[data-s="making"] { background: var(--warn-bg); color: var(--warn); }
+.seg button.on[data-s="done"] { background: var(--ok-bg); color: var(--ok); }
+.sv textarea { width: 100%; min-height: 64px; resize: vertical; background: var(--card2); border: 1px solid var(--line); border-radius: 10px; color: var(--ink);
+  font: 13px/1.5 var(--font); padding: 9px 11px; outline: none; transition: border-color .15s; }
+.sv textarea:focus { border-color: var(--accent-line); }
+.sv textarea::placeholder { color: var(--muted); }
+.sv-f { display: flex; gap: 8px; align-items: center; }
+.sv-f .saved-at { margin-left: auto; color: var(--muted); font-size: 12px; }
+.btn.saved { color: var(--accent2); border-color: var(--accent-line); background: var(--accent-dim); }
+.idea-f { display: flex; gap: 8px; flex-wrap: wrap; }
+.type-bar { display: flex; flex-wrap: wrap; gap: 6px; margin: -2px 0 14px; }
+.type-bar .chip { height: 30px; padding: 0 12px; font-size: 12.5px; }
+.type-bar .chip small { opacity: .6; margin-left: 5px; font-size: 11.5px; }
+.mo-tipbar { display: flex; align-items: center; gap: 10px; background: var(--accent-dim); border: 1px solid var(--accent-line); color: var(--ink2);
+  border-radius: 10px; padding: 8px 12px; font-size: 12.5px; margin-bottom: 12px; }
+.mo-tipbar b { color: var(--ink); }
+.mo-tipbar .btn { margin-left: auto; }
+
+@media (max-width: 1180px) {
+  .stats4, .stats-row { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+@media (max-width: 1080px) {
+  .app { grid-template-columns: 208px 1fr; }
+  .ideas { grid-template-columns: 1fr; }
+  .mo-cols { grid-template-columns: 1fr; }
+  .sv-grid { grid-template-columns: 1fr; }
+  .page { padding: 18px 20px 28px; }
+  .header { padding: 18px 20px 14px; }
+}
+</style>
+</head>
+<body>
+<div id="splash">
+  <div class="sp-inner">
+    <div class="sp-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17l5-6 4 3 7-8"/><path d="M15 6h5v5"/></svg></div>
+    <div class="sp-name">UGC Trend Finder</div>
+    <div class="sp-sub">Marketplace ideas for UGC creators</div>
+    <div class="sp-bar"><i id="sp-bar"></i></div>
+    <div class="sp-step" id="sp-step">Starting…</div>
+  </div>
+  <div class="sp-ver" id="sp-ver"></div>
+</div>
+<div class="app">
+  <aside class="side">
+    <div class="brand">
+      <div class="logo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17l5-6 4 3 7-8"/><path d="M15 6h5v5"/></svg></div>
+      <div><b>UGC Trend Finder</b><span>Marketplace ideas</span></div>
+    </div>
+    <nav class="nav" id="nav-top"></nav>
+    <div class="grow"></div>
+    <nav class="nav" id="nav-bottom"></nav>
+    <div class="status">
+      <div class="row"><span><i class="dot" id="st-dot"></i>Status</span><b id="st-status">Idle</b></div>
+      <div class="mini-bar" id="st-bar"><i></i></div>
+      <div class="row"><span>Last scan</span><b id="st-last">—</b></div>
+      <div class="row"><span>Auto-scan</span><b id="st-next">Off</b></div>
+      <button class="btn primary" id="st-scan">Scan now</button>
+      <button class="upd-pill" id="st-upd"><i></i><span></span></button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="header">
+      <div><h1 id="h-title">Loading…</h1><p id="h-sub"></p></div>
+      <div class="actions" id="h-actions"></div>
+    </div>
+    <div class="scroll" id="scroll">
+      <section class="page" id="p-loading" style="display:block">
+        <div class="skel" style="height:86px;margin-bottom:14px"></div>
+        <div class="skel" style="height:280px;margin-bottom:14px"></div>
+        <div class="skel" style="height:280px"></div>
+      </section>
+      <section class="page" id="p-scan"></section>
+      <section class="page" id="p-ideas"></section>
+      <section class="page" id="p-saved"></section>
+      <section class="page" id="p-trends"></section>
+      <section class="page" id="p-momentum"></section>
+      <section class="page" id="p-history"></section>
+      <section class="page" id="p-settings"></section>
+      <section class="page" id="p-help"></section>
+    </div>
+  </main>
+</div>
+<div class="overlay" id="overlay"></div>
+<div class="toasts" id="toasts"></div>
+<div class="upd-pop" id="upd-pop"></div>
+
+<script>
+"use strict";
+const ICON = {
+  scan: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
+  ideas: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1.1 2V16h5v-.2c.1-.8.5-1.5 1.1-2A6 6 0 0 0 12 3z"/></svg>',
+  trends: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>',
+  momentum: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-6"/></svg>',
+  play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/></svg>',
+  stop: '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>',
+  table: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/></svg>',
+  saved: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.5L5 21V4a1 1 0 0 1 1-1z"/></svg>',
+  savedOn: '<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.5L5 21V4a1 1 0 0 1 1-1z"/></svg>',
+  trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>',
+  history: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+  help: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>',
+  chev: '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>',
+  ext: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>',
+  img: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/></svg>',
+  report: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>',
+  folder: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>',
+  search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
+  pause: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M10 9v6M14 9v6"/></svg>',
+};
+const PAGES = [
+  ["scan", "New scan", "Reads the Roblox bestseller, most-favorited and newest-upload lists, then works out what you could make."],
+  ["ideas", "Ideas", "Themes buyers want, on item types without much competition yet."],
+  ["saved", "My list", "Ideas you saved. Track what you're making and keep notes next to each one."],
+  ["trends", "Trending themes", "Every theme from your scan. Click one to search it on the Roblox marketplace."],
+  ["momentum", "Momentum", "How themes and items have been selling across your scans. Drag the slider to go back in time."],
+  ["history", "History", "Every scan you've run. Scanning every few days shows which themes are climbing."],
+  ["settings", "Settings", "Changes are saved automatically."],
+  ["help", "How it works", "What the app looks at and what the scores mean."],
+];
+const SWATCH = {black:"#1d1d1f",white:"#f4f4f4",red:"#d33b3b",blue:"#3a6fd8",green:"#3aa35b",pink:"#ee7fb5",purple:"#8a5cd6",yellow:"#f1c93b",
+  orange:"#ef8a33",brown:"#8a5a3b",grey:"#8e8e93",gold:"#d4a72c",silver:"#c0c4cc",cyan:"#35c4d8",teal:"#2a9d8f",navy:"#23355c",beige:"#dccaa6",
+  cream:"#f3e8cf",lavender:"#b9a6e8",mint:"#9fe3c4",rainbow:"linear-gradient(90deg,#e44,#f93,#fd3,#4c6,#39f,#96f)",pastel:"linear-gradient(90deg,#fbc,#bdf,#cfc)",
+  neon:"#39ff88",blonde:"#f0d58a",ginger:"#c8622c",chrome:"linear-gradient(90deg,#999,#eee,#888)",holographic:"linear-gradient(90deg,#f9c,#9cf,#cf9,#fc9)"};
+
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const title = s => String(s || "").replace(/\b\w/g, c => c.toUpperCase());
+const fmtNum = n => (n ?? 0).toLocaleString("en-US");
+function fmtDur(sec) {
+  sec = Math.max(0, Math.round(sec));
+  if (sec < 60) return `${sec} s`;
+  const m = Math.floor(sec / 60), s = sec % 60;
+  if (m < 60) return s ? `${m} min ${s} s` : `${m} min`;
+  return `${Math.floor(m / 60)} h ${m % 60} min`;
+}
+function ago(iso) {
+  if (!iso) return "never";
+  const s = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (s < 60) return "just now";
+  if (s < 3600) return `${Math.floor(s / 60)} min ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)} h ago`;
+  const d = Math.floor(s / 86400); return `${d} day${d === 1 ? "" : "s"} ago`;
+}
+
+let api = null;
+const S = {
+  page: null, state: null, scan: null, current: null, currentId: null, search: "",
+  saved: [], savedLoaded: false, savedFilter: "all", ideaType: "all",
+  run: { running: false, logs: [] },
+};
+
+/* ---------- api bridge ---------- */
+function call(name, ...args) {
+  if (!api || !api[name]) return Promise.resolve(null);
+  return api[name](...args).catch(e => { console.error(name, e); toast(`Something went wrong: ${e}`, "err"); return null; });
+}
+window.__ev = function (ev) { try { onEvent(ev); } catch (e) { console.error(e); } };
+
+/* ---------- ui helpers ---------- */
+function toast(msg, kind = "") {
+  const t = document.createElement("div");
+  t.className = `toast ${kind}`; t.textContent = msg;
+  $("#toasts").appendChild(t);
+  setTimeout(() => { t.style.transition = "opacity .3s"; t.style.opacity = 0; setTimeout(() => t.remove(), 320); }, 4200);
+}
+function modal(titleText, text, buttons = [["OK", "primary"]]) {
+  return new Promise(res => {
+    const o = $("#overlay");
+    o.innerHTML = `<div class="modal"><h3>${esc(titleText)}</h3><p>${esc(text)}</p><div class="btns">${
+      buttons.map(([l, k], i) => `<button class="btn ${k}" data-i="${i}">${esc(l)}</button>`).join("")}</div></div>`;
+    o.classList.add("show");
+    const done = v => { o.classList.remove("show"); o.innerHTML = ""; document.removeEventListener("keydown", key); res(v); };
+    const key = e => { if (e.key === "Escape") done(null); };
+    document.addEventListener("keydown", key);
+    o.onclick = e => { if (e.target === o) done(null); };
+    o.querySelectorAll("button").forEach(b => b.onclick = () => done(buttons[+b.dataset.i][0]));
+  });
+}
+function modalNotes(titleText, text, notes) {
+  return new Promise(res => {
+    const o = $("#overlay");
+    o.innerHTML = `<div class="modal"><h3>${esc(titleText)}</h3><p>${esc(text)}</p>${notes ? `<div class="notes selectable">${esc(notes)}</div><div style="height:18px"></div>` : ""}
+      <div class="btns"><button class="btn primary" id="mn-ok">Nice</button></div></div>`;
+    o.classList.add("show");
+    const done = () => { o.classList.remove("show"); o.innerHTML = ""; res(); };
+    o.onclick = e => { if (e.target === o) done(); };
+    $("#mn-ok").onclick = done;
+  });
+}
+function lightbox(item) {
+  const o = $("#overlay");
+  o.innerHTML = `<div class="lightbox">${imgBox(item.thumb, "", itemId(item))}<div class="lb-b"><div><b>${esc(item.name)}</b>
+    <span>${esc(item.type)} · ${esc(item.price)}${item.creator ? " · by " + esc(item.creator) : ""}</span></div>
+    <button class="btn primary sm" id="lb-open">${ICON.ext} View on Roblox</button></div></div>`;
+  o.classList.add("show");
+  wireImages(o);
+  const close = () => { o.classList.remove("show"); o.innerHTML = ""; document.removeEventListener("keydown", key); };
+  const key = e => { if (e.key === "Escape") close(); };
+  document.addEventListener("keydown", key);
+  o.onclick = e => { if (e.target === o) close(); };
+  $("#lb-open").onclick = () => call("open_url", item.url);
+}
+/* Item pictures: shown straight from Roblox when the scan has a link; if there is no link
+   (older scans) or it no longer works, the app fetches the picture itself and keeps a copy. */
+const THUMBS = {};
+const thumbQueue = new Map();
+let thumbTimer = null;
+function itemId(it) {
+  if (!it) return "";
+  if (it.id) return String(it.id);
+  const m = String(it.url || "").match(/catalog\/(\d+)/);
+  return m ? m[1] : "";
+}
+function imgBox(url, cls = "", id = "") {
+  const src = url || (id && THUMBS[id]) || "";
+  return `<div class="img ${cls}" data-id="${esc(id)}">${src ? `<img src="${esc(src)}" alt="" referrerpolicy="no-referrer">` : ""}<div class="ph">${ICON.img}</div></div>`;
+}
+function setPicture(box, uri) {
+  box.querySelector("img")?.remove();
+  const im = document.createElement("img");
+  im.alt = ""; im.dataset.w = 1; im.dataset.local = 1;
+  im.onload = () => im.classList.add("loaded");
+  im.src = uri;
+  box.prepend(im);
+}
+function needPicture(box) {
+  const id = box.dataset.id;
+  if (!id || box.dataset.asked) return;
+  if (THUMBS[id]) { setPicture(box, THUMBS[id]); return; }
+  box.dataset.asked = 1;
+  if (!thumbQueue.has(id)) thumbQueue.set(id, []);
+  thumbQueue.get(id).push(box);
+  clearTimeout(thumbTimer);
+  thumbTimer = setTimeout(flushThumbs, 40);
+}
+async function flushThumbs() {
+  const batch = [...thumbQueue.entries()];
+  thumbQueue.clear();
+  for (let i = 0; i < batch.length; i += 24) {
+    const part = batch.slice(i, i + 24);
+    const got = await call("thumbs", part.map(([id]) => id)) || {};
+    for (const [id, boxes] of part) {
+      if (!got[id]) continue;
+      THUMBS[id] = got[id];
+      boxes.forEach(b => { if (b.isConnected) setPicture(b, got[id]); });
+    }
+  }
+}
+function wireImages(root) {
+  root.querySelectorAll(".img").forEach(box => {
+    const im = box.querySelector("img");
+    if (!im) { needPicture(box); return; }
+    if (im.dataset.w) return;
+    im.dataset.w = 1;
+    if (im.complete && im.naturalWidth) im.classList.add("loaded");
+    im.onload = () => im.classList.add("loaded");
+    im.onerror = () => { im.remove(); needPicture(box); };
+  });
+}
+function chips(id, options, value, disabled = false) {
+  return `<div class="chips" id="${id}">${options.map(([v, l]) =>
+    `<button class="chip ${String(v) === String(value) ? "on" : ""}" data-v="${esc(v)}" ${disabled ? "disabled" : ""}>${esc(l)}</button>`).join("")}</div>`;
+}
+function wireChips(id, cb) {
+  const el = document.getElementById(id);
+  el.querySelectorAll(".chip").forEach(b => b.onclick = () => {
+    el.querySelectorAll(".chip").forEach(x => x.classList.toggle("on", x === b));
+    cb(b.dataset.v);
+  });
+}
+function toggle(id, label, sub, on) {
+  return `<div class="toggle ${on ? "on" : ""}" id="${id}"><div class="sw"></div><div><b>${esc(label)}</b>${sub ? `<small>${esc(sub)}</small>` : ""}</div></div>`;
+}
+function wireToggle(id, cb) {
+  const el = document.getElementById(id);
+  el.onclick = () => { if (el.classList.contains("disabled")) return; el.classList.toggle("on"); cb(el.classList.contains("on")); };
+}
+function dropdown(id, label, items) {
+  return `<div class="dd" id="${id}"><button class="btn sm">${esc(label)} ${ICON.chev}</button><div class="dd-menu">${
+    items.map((it, i) => `<button data-i="${i}" class="${it.sel ? "sel" : ""}">${esc(it.label)}</button>`).join("")}</div></div>`;
+}
+function wireDropdown(id, items) {
+  const dd = document.getElementById(id);
+  if (!dd) return;
+  dd.querySelector(".btn").onclick = e => { e.stopPropagation(); document.querySelectorAll(".dd.open").forEach(x => x !== dd && x.classList.remove("open")); dd.classList.toggle("open"); };
+  dd.querySelectorAll(".dd-menu button").forEach(b => b.onclick = () => { dd.classList.remove("open"); items[+b.dataset.i].fn(); });
+}
+document.addEventListener("click", () => document.querySelectorAll(".dd.open").forEach(x => x.classList.remove("open")));
+
+/* ---------- navigation ---------- */
+function buildNav() {
+  const mk = ([key, label]) => `<button data-p="${key}">${ICON[key]}<span>${esc(label)}</span></button>`;
+  $("#nav-top").innerHTML = PAGES.slice(0, 6).map(mk).join("");
+  $("#nav-bottom").innerHTML = PAGES.slice(6).map(mk).join("");
+  document.querySelectorAll(".nav button").forEach(b => b.onclick = () => show(b.dataset.p));
+}
+function show(page) {
+  S.page = page;
+  const p = PAGES.find(x => x[0] === page);
+  $("#h-title").textContent = p[1];
+  $("#h-sub").textContent = p[2];
+  $("#h-actions").innerHTML = "";
+  document.querySelectorAll(".nav button").forEach(b => b.classList.toggle("active", b.dataset.p === page));
+  document.querySelectorAll(".page").forEach(s => { s.classList.remove("active"); s.style.display = ""; });
+  const el = document.getElementById("p-" + page);
+  el.classList.add("active");
+  ({ scan: renderScan, ideas: renderIdeas, saved: renderSaved, trends: renderTrends, momentum: renderMomentum, history: renderHistory, settings: renderSettings, help: renderHelp })[page]();
+  $("#scroll").scrollTop = 0;
+}
+
+/* ---------- state ---------- */
+async function refreshState() {
+  const st = await call("get_state");
+  if (!st) return;
+  S.state = st;
+  if (!S.savedLoaded) { S.saved = await call("get_saved") || []; S.savedLoaded = true; }
+  if (!S.currentId || !st.history.find(h => h.id === S.currentId)) {
+    S.currentId = st.history[0]?.id || null;
+    S.current = null;
+  }
+  if (S.currentId && !S.current) S.current = await call("get_scan", S.currentId);
+  if (st.running && !S.run.running) Object.assign(S.run, st.running, { running: true });
+  updateStatus();
+  if (st.update) showUpdate(st.update);
+}
+async function selectScan(id) {
+  S.currentId = id;
+  S.current = await call("get_scan", id);
+  show(S.page);
+}
+function scanLabel(h) { return `${h.label}  ·  ${h.scope}`; }
+function scanPicker(id) {
+  const hist = S.state?.history || [];
+  if (!hist.length) return "";
+  const cur = hist.find(h => h.id === S.currentId) || hist[0];
+  return dropdown(id, scanLabel(cur), hist.slice(0, 30).map(h => ({ label: scanLabel(h), sel: h.id === cur.id, fn: () => selectScan(h.id) })));
+}
+function wirePicker(id) {
+  const hist = S.state?.history || [];
+  wireDropdown(id, hist.slice(0, 30).map(h => ({ fn: () => selectScan(h.id) })));
+}
+
+function updateStatus() {
+  const st = S.state; if (!st) return;
+  const running = S.run.running;
+  $("#st-dot").className = "dot" + (running ? " busy" : "");
+  $("#st-status").textContent = running ? (S.run.waitUntil > Date.now() ? "Paused" : "Scanning") : "Idle";
+  $("#st-bar").style.display = running ? "block" : "none";
+  if (running) $("#st-bar i").style.width = pct() + "%";
+  $("#st-last").textContent = ago(st.last_scan);
+  const hrs = +st.settings.auto_scan_hours || 0;
+  let next = "Off";
+  if (hrs) {
+    if (running) next = "running";
+    else if (!st.last_scan) next = "soon";
+    else {
+      const left = hrs * 3600 - (Date.now() - new Date(st.last_scan).getTime()) / 1000;
+      next = left <= 60 ? "soon" : "in " + fmtDur(left).replace(/ \d+ s$/, "");
+    }
+  }
+  $("#st-next").textContent = next;
+  $("#st-scan").disabled = running;
+  const savedBtn = document.querySelector('.nav button[data-p="saved"]');
+  if (savedBtn) {
+    const n = (S.saved || []).filter(x => x.status === "todo" || x.status === "making").length;
+    let b = savedBtn.querySelector(".badge");
+    if (n && !b) { b = document.createElement("span"); b.className = "badge"; savedBtn.appendChild(b); }
+    if (b) { if (n) b.textContent = n; else b.remove(); }
+  }
+  const ideasBtn = document.querySelector('.nav button[data-p="ideas"]');
+  if (ideasBtn) {
+    const n = S.current?.ideas?.length || 0;
+    let b = ideasBtn.querySelector(".badge");
+    if (n && !b) { b = document.createElement("span"); b.className = "badge"; ideasBtn.appendChild(b); }
+    if (b) { if (n) b.textContent = n; else b.remove(); }
+  }
+}
+
+/* ---------- scan page ---------- */
+function pct() {
+  const r = S.run;
+  if (!r.total) return 0;
+  return Math.min(100, Math.round(100 * r.done / r.total));
+}
+function renderScan() {
+  const s = S.state.settings, r = S.run, dis = r.running;
+  $("#p-scan").innerHTML = `
+  <div class="card"><div class="card-h">Scan settings</div><div class="card-b">
+    <div class="field"><label>What to scan</label>
+      ${chips("c-scope", [["all", "Accessories + clothing"], ["accessories", "Accessories"], ["clothing", "Clothing"]], s.scope, dis)}</div>
+    <div class="field"><label>How deep</label>
+      ${chips("c-depth", [[1, "Quick · top 120"], [3, "Normal · top 360"], [5, "Deep · top 600"]], s.depth, dis)}
+      <p class="hint" id="estimate" style="margin:10px 0 0"></p></div>
+    <div class="field">
+      ${toggle("t-blender", "Only items I can make in Blender", "Skips classic 2D shirts, pants and t-shirts.", s.blender_only)}
+      <div style="height:10px"></div>
+      ${toggle("t-roblox", "Also count items made by Roblox", "Off by default: official items aren't your competition.", s.include_roblox)}</div>
+    <div class="field flex" style="margin-top:22px">
+      <button class="btn primary lg" id="b-start" ${dis ? "disabled" : ""}>Start scan</button>
+      <button class="btn lg" id="b-cancel" ${dis ? "" : "disabled"}>Cancel</button></div>
+  </div></div>
+  <div class="card" id="prog"><div class="card-h">Progress</div><div class="card-b">
+    <div class="prog-top"><div class="spinner"></div><div class="state" id="pr-state">Ready when you are.</div><div class="pct" id="pr-pct"></div></div>
+    <div class="bar"><i id="pr-bar"></i></div>
+    <div class="stats4">
+      <div class="stat"><span>Time elapsed</span><b id="pr-el">—</b></div>
+      <div class="stat"><span>Time left (estimate)</span><b id="pr-left">—</b></div>
+      <div class="stat"><span>Requests done</span><b id="pr-req">—</b></div>
+      <div class="stat"><span>Working on</span><b class="small" id="pr-step" title="">—</b></div>
+    </div>
+    <div class="wait-box">${ICON.pause}<div id="pr-wait"></div></div>
+    <div class="pulse-line" id="pr-pulse"></div>
+    <div class="result-box" id="pr-result"></div>
+    <details class="log" id="pr-log-d"><summary>Show details ${ICON.chev}</summary><pre id="pr-log"></pre></details>
+  </div></div>`;
+  wireChips("c-scope", v => saveScanOpt({ scope: v }));
+  wireChips("c-depth", v => saveScanOpt({ depth: +v }));
+  wireToggle("t-blender", v => saveScanOpt({ blender_only: v }));
+  wireToggle("t-roblox", v => saveScanOpt({ include_roblox: v }));
+  if (dis) ["t-blender", "t-roblox"].forEach(id => document.getElementById(id).classList.add("disabled"));
+  $("#b-start").onclick = () => startScan();
+  $("#b-cancel").onclick = () => { call("cancel_scan"); $("#pr-state").textContent = "Stopping…"; $("#b-cancel").disabled = true; };
+  $("#pr-log").textContent = r.logs.join("\n");
+  updateEstimate();
+  paintProgress();
+  if (r.result) showResult(r.result);
+}
+async function saveScanOpt(patch) {
+  const st = await call("save_settings", patch);
+  if (st) S.state.settings = st;
+  updateEstimate();
+}
+function updateEstimate() {
+  const s = S.state.settings, el = $("#estimate");
+  if (!el) return;
+  const cats = s.scope === "all" ? 2 : 1, reqs = s.depth * cats * 4 + 1;
+  const secs = reqs * (s.gap * 1.18 + 0.7);
+  el.textContent = `Takes about ${fmtDur(Math.round(secs / 10) * 10)}: ${reqs} requests, spaced ${s.gap} seconds apart so Roblox doesn't rate-limit you.`;
+}
+async function startScan(force = false) {
+  const r = await call("start_scan", force);
+  if (!r) return;
+  if (r.confirm) {
+    const a = await modal("Scan again already?", r.confirm, [["Cancel", ""], ["Scan anyway", "primary"]]);
+    if (a === "Scan anyway") startScan(true);
+    return;
+  }
+  if (r.error) toast(r.error, "err");
+}
+function paintProgress() {
+  const r = S.run, prog = $("#prog");
+  if (!prog) return;
+  const waiting = r.running && r.waitUntil > Date.now();
+  prog.classList.toggle("running", r.running);
+  prog.classList.toggle("waiting", waiting);
+  const p = pct();
+  $("#pr-bar").style.width = (r.running || r.finished ? p : 0) + "%";
+  $("#pr-pct").textContent = r.running || r.finished ? p + "%" : "";
+  if (!r.running && !r.finished) { $("#pr-pulse").textContent = ""; return; }
+  const now = Date.now();
+  const elapsed = ((r.finished || now) - r.startTs) / 1000;
+  $("#pr-el").textContent = fmtDur(elapsed);
+  $("#pr-req").textContent = r.total ? `${Math.min(r.done, r.total)} / ${r.total}` : "—";
+  $("#pr-step").textContent = r.label || "Starting…";
+  $("#pr-step").title = r.label || "";
+  if (r.running) {
+    let left;
+    const waitLeft = waiting ? (r.waitUntil - now) / 1000 : 0;
+    const waitedNow = waiting ? (now - r.waitStart) / 1000 : 0;
+    const active = Math.max(1, elapsed - r.waitedTotal - waitedNow);
+    if (r.done >= 2) left = (active / r.done) * (r.total - r.done) + waitLeft;
+    else left = Math.max(5, r.estimate - elapsed) + waitLeft;
+    $("#pr-left").textContent = r.done >= r.total ? "almost done" : "about " + fmtDur(Math.max(3, left));
+    $("#pr-state").textContent = waiting ? "Paused by Roblox, will continue on its own" : (r.auto ? "Automatic scan running…" : "Scanning the marketplace…");
+    if (waiting) {
+      const reason = r.waitReason === "rate_limit" ? "Roblox asked us to slow down." : r.waitReason === "network" ? "Your connection had a hiccup." : "Roblox had a hiccup.";
+      $("#pr-wait").innerHTML = `<b>${esc(reason)}</b> Resuming in ${Math.ceil(waitLeft)} s. This is normal and the scan is still running.`;
+    }
+    const quiet = (now - r.lastActivity) / 1000;
+    $("#pr-pulse").innerHTML = waiting ? "" : quiet > 25
+      ? `<span class="dot busy"></span>Waiting for Roblox to answer (${Math.round(quiet)} s). Slow responses are normal; it retries on its own.`
+      : `<span class="dot busy"></span>Working · last activity ${Math.max(0, Math.round(quiet))} s ago`;
+  } else {
+    $("#pr-left").textContent = "—";
+    $("#pr-pulse").textContent = "";
+    $("#pr-state").textContent = r.result ? (r.result.ok ? "Scan complete" : "The scan didn't finish") : "Ready when you are.";
+  }
+}
+function showResult(res) {
+  const el = $("#pr-result"); if (!el) return;
+  el.className = "result-box " + (res.ok ? "ok" : "err");
+  el.innerHTML = `<span>${esc(res.text)}</span>${res.ok ? `<button class="btn primary sm" id="pr-see">See your ideas</button>` : ""}`;
+  if (res.ok) $("#pr-see").onclick = () => show("ideas");
+}
+function addLog(msg) {
+  S.run.logs.push(msg);
+  if (S.run.logs.length > 400) S.run.logs.shift();
+  const el = $("#pr-log");
+  if (el) { el.textContent += (el.textContent ? "\n" : "") + msg; el.scrollTop = el.scrollHeight; }
+}
+
+/* ---------- events from python ---------- */
+function onEvent(ev) {
+  const r = S.run;
+  switch (ev.type) {
+    case "scan_start":
+      Object.assign(r, { running: true, finished: 0, auto: ev.auto, startTs: Date.now(), total: ev.total || 0, done: 0, estimate: ev.estimate || 60,
+        label: "Starting…", waitUntil: 0, waitedTotal: 0, lastActivity: Date.now(), logs: [], result: null });
+      if (S.page === "scan") renderScan(); updateStatus(); break;
+    case "progress":
+      Object.assign(r, { done: ev.done, total: ev.total, label: ev.page ? `${ev.label} · page ${ev.page} of ${ev.pages}` : ev.label, lastActivity: Date.now() });
+      if (r.waitUntil) { r.waitedTotal += Math.max(0, (Math.min(Date.now(), r.waitUntil) - r.waitStart) / 1000); r.waitUntil = 0; }
+      paintProgress(); updateStatus(); break;
+    case "step":
+      Object.assign(r, { label: ev.label, lastActivity: Date.now() }); paintProgress(); break;
+    case "wait":
+      Object.assign(r, { waitUntil: Date.now() + ev.seconds * 1000, waitStart: Date.now(), waitReason: ev.reason, lastActivity: Date.now() });
+      paintProgress(); updateStatus(); break;
+    case "log":
+      r.lastActivity = Date.now(); addLog(ev.msg); break;
+    case "scan_done":
+      Object.assign(r, { running: false, finished: Date.now(), done: r.total, waitUntil: 0,
+        result: { ok: true, text: `Done in ${fmtDur((Date.now() - r.startTs) / 1000)}. ${ev.n_ideas} ideas are ready.` } });
+      S.currentId = ev.id; S.current = null; MOM.data = null;
+      refreshState().then(() => { if (ev.go && S.page === "scan") show("ideas"); else if (S.page === "scan") renderScan(); else show(S.page); });
+      toast(`Scan finished: ${ev.n_ideas} new ideas.`, "ok"); break;
+    case "scan_cancelled":
+      Object.assign(r, { running: false, finished: 0, result: { ok: false, text: "Scan cancelled." } });
+      if (S.page === "scan") renderScan(); updateStatus(); break;
+    case "scan_error":
+      Object.assign(r, { running: false, finished: 0, result: { ok: false, text: ev.msg } });
+      if (S.page === "scan") renderScan(); updateStatus();
+      modal("The scan didn't finish", ev.msg); break;
+    case "navigate": show(ev.page); break;
+    case "state": refreshState().then(() => S.page && show(S.page)); break;
+    case "update": showUpdate(ev.info); break;
+    case "update_progress": updateProgress(ev); break;
+    case "toast": toast(ev.msg, ev.kind || ""); break;
+    case "reveal":
+      $(".app").classList.add("revealed");
+      setTimeout(() => { $(".app").style.transform = "none"; }, 700);
+      revealResolve && revealResolve();
+      break;
+  }
+}
+
+/* ---------- ideas page ---------- */
+function renderIdeas() {
+  const el = $("#p-ideas"), h = S.current;
+  $("#h-actions").innerHTML = S.state.history.length ? scanPicker("dd-ideas") +
+    `<button class="btn sm" id="b-report">${ICON.report} Full report</button>` : "";
+  if (S.state.history.length) { wirePicker("dd-ideas"); $("#b-report").onclick = () => call("open_report", S.currentId); }
+  if (!h) { el.innerHTML = emptyState(ICON.ideas, "No scans yet", "Your item ideas will show up here after your first scan."); wireEmpty(); return; }
+  const ideas = h.ideas || [], top = h.top_items || [];
+  el.innerHTML = `
+  <div class="stats-row">
+    <div class="stat"><span>Bestsellers analyzed</span><b>${fmtNum(h.n_items)}</b></div>
+    <div class="stat"><span>New uploads checked</span><b>${fmtNum(h.n_new)}</b></div>
+    <div class="stat"><span>Top theme right now</span><b>${esc(title(h.themes?.[0]?.theme || "—"))}</b></div>
+    <div class="stat"><span>Ideas</span><b>${ideas.length}</b></div>
+  </div>
+  ${top.length ? `<div class="sec-title"><h2>Selling best right now</h2><span>Top UGC bestsellers from this scan. Click one for a closer look.</span></div>
+  <div class="strip" id="strip">${top.map((it, i) => `<div class="item" data-i="${i}">${imgBox(it.thumb, "", itemId(it))}<span class="rank">#${i + 1}</span>
+    <div class="meta"><b title="${esc(it.name)}">${esc(it.name)}</b><span>${esc(it.type)} · ${esc(it.price)}</span></div></div>`).join("")}</div>` : ""}
+  <div class="sec-title"><h2>Ideas to make</h2><span>Ranked by demand vs. competition</span></div>
+  ${typeBar(ideas)}
+  ${ideas.length ? `<div class="ideas">${ideas.map((idea, i) => S.ideaType === "all" || idea.type === S.ideaType ? ideaCard(idea, i) : "").join("")}</div>`
+    : `<div class="card"><div class="card-b muted">No ideas in this scan. Try a Normal or Deep scan.</div></div>`}`;
+  el.querySelectorAll(".item").forEach(c => c.onclick = () => lightbox(top[+c.dataset.i]));
+  el.querySelectorAll(".idea").forEach(card => {
+    const idea = ideas[+card.dataset.i];
+    card.querySelector(".idea-top .img").onclick = () => idea.examples?.[0] && lightbox({ ...idea.examples[0], thumb: idea.image || idea.examples[0].thumb });
+    card.querySelectorAll(".ex").forEach(x => x.onclick = () => lightbox(idea.examples[+x.dataset.j]));
+    card.querySelector(".b-search").onclick = () => call("open_url", "https://www.roblox.com/catalog?Keyword=" + encodeURIComponent(idea.theme));
+    card.querySelector(".b-save").onclick = e => toggleSave(idea, e.currentTarget);
+  });
+  el.querySelectorAll("#type-bar .chip").forEach(c => c.onclick = () => { S.ideaType = c.dataset.v; const y = $("#scroll").scrollTop; renderIdeas(); $("#scroll").scrollTop = y; });
+  wireImages(el);
+  updateStatus();
+}
+function ideaCard(idea, i) {
+  const pr = idea.price;
+  const price = pr ? (pr[0] === pr[1] ? `${fmtNum(pr[0])} R$` : `${fmtNum(pr[0])}–${fmtNum(pr[1])} R$`) : "not enough data";
+  const kind = idea.kind === "proven" ? `<span class="tag ok">Proven combo</span>` : `<span class="tag gap">Open gap</span>`;
+  const colors = (idea.colors || []).map(c => `<span class="sw-item"><i style="background:${SWATCH[c] || "#888"}"></i>${esc(c)}</span>`).join("") || "—";
+  return `<article class="idea" data-i="${i}">
+    <div class="idea-top">
+      ${imgBox(idea.image || idea.examples?.[0]?.thumb, "", itemId((idea.examples || []).find(e => e.thumb && e.thumb === idea.image) || idea.examples?.[0]))}
+      <div class="idea-h">
+        <div class="t"><span class="num">${i + 1}</span><h3>${esc(title(idea.theme))} <span>·</span> ${esc(idea.type)}</h3>
+          <div class="score"><b>${idea.score}</b><span>SCORE</span></div></div>
+        <div class="tags">${kind}<span class="tag">Confidence: ${esc(idea.confidence)}</span>${idea.blender === false ? `<span class="tag warn">2D, not Blender</span>` : ""}</div>
+        <div class="facts"><div><span>Suggested price</span><b>${price}</b></div><div><span>Colors to try</span><div class="swatches">${colors}</div></div></div>
+      </div>
+    </div>
+    <div class="idea-b">
+      <div class="lbl">Why</div>
+      <ul class="reasons">${(idea.reasons || []).map(r => `<li>${esc(r)}</li>`).join("")}</ul>
+      ${idea.examples?.length ? `<div class="lbl">Look at these for reference</div><div class="examples">${idea.examples.map((ex, j) =>
+        `<div class="ex" data-j="${j}">${imgBox(ex.thumb, "", itemId(ex))}<div><b>${esc(ex.name)}</b><span>${esc(ex.type)} · ${esc(ex.price)}</span></div></div>`).join("")}</div>` : ""}
+      <div class="idea-f">${saveBtn(idea)}<button class="btn sm b-search">${ICON.search} Search “${esc(idea.theme)}” on Roblox</button></div>
+    </div></article>`;
+}
+function emptyState(icon, t, text) {
+  return `<div class="empty"><div class="ic">${icon}</div><h3>${esc(t)}</h3><p>${esc(text)}</p><button class="btn primary" id="b-first">Run your first scan</button></div>`;
+}
+function wireEmpty() { const b = $("#b-first"); if (b) b.onclick = () => { show("scan"); startScan(); }; }
+
+/* ---------- my list ---------- */
+const STATUS = [["todo", "To do"], ["making", "Making"], ["done", "Uploaded"], ["skip", "Skipped"]];
+const ideaKey = idea => `${idea.theme}|${idea.type}`.toLowerCase();
+const isSaved = idea => (S.saved || []).some(x => x.key === ideaKey(idea));
+function saveBtn(idea) {
+  const on = isSaved(idea);
+  return `<button class="btn sm b-save ${on ? "saved" : ""}">${on ? ICON.savedOn + " Saved" : ICON.saved + " Save to my list"}</button>`;
+}
+function typeBar(ideas) {
+  if (ideas.length < 4) return "";
+  const counts = {};
+  ideas.forEach(i => counts[i.type] = (counts[i.type] || 0) + 1);
+  const types = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  if (types.length < 2) return "";
+  if (S.ideaType !== "all" && !counts[S.ideaType]) S.ideaType = "all";
+  return `<div class="type-bar" id="type-bar"><button class="chip ${S.ideaType === "all" ? "on" : ""}" data-v="all">All types<small>${ideas.length}</small></button>${
+    types.map(([t, n]) => `<button class="chip ${S.ideaType === t ? "on" : ""}" data-v="${esc(t)}">${esc(t)}<small>${n}</small></button>`).join("")}</div>`;
+}
+async function toggleSave(idea, btn) {
+  const key = ideaKey(idea);
+  if (isSaved(idea)) {
+    S.saved = await call("remove_saved", key) || S.saved;
+    toast("Removed from your list.");
+  } else {
+    const ex = (idea.examples || []).find(e => e.thumb && e.thumb === idea.image) || idea.examples?.[0];
+    S.saved = await call("save_idea", { theme: idea.theme, type: idea.type, image: idea.image || ex?.thumb || null, image_id: itemId(ex),
+      price: idea.price, score: idea.score, colors: idea.colors, reasons: (idea.reasons || []).slice(0, 3), kind: idea.kind,
+      examples: (idea.examples || []).slice(0, 4) }) || S.saved;
+    toast(`Saved “${title(idea.theme)} · ${idea.type}” to your list.`, "ok");
+  }
+  if (btn) btn.outerHTML = saveBtn(idea);
+  document.querySelectorAll(".idea").forEach(card => {
+    const b = card.querySelector(".b-save"), i = S.current?.ideas?.[+card.dataset.i];
+    if (b && i) b.onclick = e => toggleSave(i, e.currentTarget);
+  });
+  updateStatus();
+}
+function trendNow(theme) {
+  const ts = S.current?.themes || [];
+  const i = ts.findIndex(t => t.theme === theme);
+  if (i < 0) return { cls: "", text: "Not among the trending themes in your latest scan" };
+  const t = ts[i], m = t.momentum;
+  const mom = m >= 1.2 ? `selling faster today (${m.toFixed(1)}×)` : m <= 0.8 ? `slowing down today (${m.toFixed(1)}×)` : "steady today";
+  return { cls: m >= 1.2 ? "hot" : m <= 0.8 ? "cool" : "", text: `Now #${i + 1} theme · ${mom}` };
+}
+function renderSaved() {
+  const el = $("#p-saved"), items = S.saved || [];
+  const count = k => items.filter(x => x.status === k).length;
+  $("#h-actions").innerHTML = items.length ? chips("c-sv", [["all", `All ${items.length}`], ...STATUS.map(([k, l]) => [k, `${l} ${count(k)}`])], S.savedFilter) : "";
+  if (items.length) wireChips("c-sv", v => { S.savedFilter = v; renderSaved(); });
+  if (!items.length) {
+    el.innerHTML = `<div class="empty"><div class="ic">${ICON.saved}</div><h3>Nothing saved yet</h3><p>Press “Save to my list” on any idea to keep it here, with a status and your own notes.</p>
+      <button class="btn primary" id="b-browse">Browse ideas</button></div>`;
+    $("#b-browse").onclick = () => show("ideas"); return;
+  }
+  const shown = items.filter(x => S.savedFilter === "all" || x.status === S.savedFilter);
+  el.innerHTML = shown.length ? `<div class="sv-grid">${shown.map(x => {
+    const now = trendNow(x.theme), pr = x.price;
+    const price = pr ? (pr[0] === pr[1] ? `${fmtNum(pr[0])} R$` : `${fmtNum(pr[0])}–${fmtNum(pr[1])} R$`) : null;
+    return `<article class="sv ${x.status}" data-k="${esc(x.key)}">
+      <div class="sv-top">${imgBox(x.image, "", x.image_id || "")}
+        <div><h3>${esc(title(x.theme))} <span>·</span> ${esc(x.type)}</h3>
+          <div class="sv-meta">${price ? `<span class="tag">${price}</span>` : ""}${x.score != null ? `<span class="tag">Score ${x.score}</span>` : ""}${
+            x.kind ? (x.kind === "proven" ? `<span class="tag ok">Proven combo</span>` : `<span class="tag gap">Open gap</span>`) : ""}</div>
+          <div class="sv-now ${now.cls}"><i></i>${esc(now.text)}</div></div></div>
+      <div class="seg">${STATUS.map(([k, l]) => `<button data-s="${k}" class="${x.status === k ? "on" : ""}">${l}</button>`).join("")}</div>
+      <textarea placeholder="Notes: colors, poly count, where you left off…">${esc(x.notes || "")}</textarea>
+      <div class="sv-f"><button class="btn sm b-search">${ICON.search} Search on Roblox</button><button class="btn sm danger b-rm">${ICON.trash} Remove</button>
+        <span class="saved-at">Saved ${esc(ago(x.added))}</span></div></article>`;
+  }).join("")}</div>` : `<div class="card"><div class="card-b muted" style="text-align:center;padding:36px">Nothing here with that status.</div></div>`;
+  el.querySelectorAll(".sv").forEach(card => {
+    const key = card.dataset.k, x = items.find(i => i.key === key);
+    card.querySelector(".img").onclick = () => x.examples?.[0] ? lightbox({ ...x.examples[0], thumb: x.image || x.examples[0].thumb }) : null;
+    card.querySelectorAll(".seg button").forEach(b => b.onclick = async () => {
+      S.saved = await call("update_saved", key, { status: b.dataset.s }) || S.saved;
+      updateStatus(); renderSaved();
+    });
+    let t = null;
+    const ta = card.querySelector("textarea");
+    ta.oninput = () => { clearTimeout(t); t = setTimeout(async () => { S.saved = await call("update_saved", key, { notes: ta.value }) || S.saved; }, 500); };
+    card.querySelector(".b-search").onclick = () => call("open_url", "https://www.roblox.com/catalog?Keyword=" + encodeURIComponent(x.theme));
+    card.querySelector(".b-rm").onclick = async () => {
+      const a = await modal("Remove this idea?", `“${title(x.theme)} · ${x.type}” and its notes will be removed from your list.`, [["Cancel", ""], ["Remove", "primary"]]);
+      if (a !== "Remove") return;
+      S.saved = await call("remove_saved", key) || S.saved; updateStatus(); renderSaved();
+    };
+  });
+  wireImages(el);
+}
+
+/* ---------- trends page ---------- */
+function renderTrends() {
+  const el = $("#p-trends"), h = S.current;
+  $("#h-actions").innerHTML = h ? `<label class="input">${ICON.search}<input id="q" placeholder="Search themes…" value="${esc(S.search)}"></label>` + scanPicker("dd-trends") : "";
+  if (h) {
+    wirePicker("dd-trends");
+    const q = $("#q");
+    q.oninput = () => { S.search = q.value; paintTrends(); };
+  }
+  if (!h) { el.innerHTML = emptyState(ICON.trends, "No scans yet", "Run a scan to see which themes are trending."); wireEmpty(); return; }
+  el.innerHTML = `<div class="card"><div class="table-wrap"><table><thead><tr><th class="c">#</th><th>Theme</th><th>Opportunity</th><th class="c">Bestsellers</th>
+    <th class="c">Momentum</th><th class="c">Competition</th><th class="c">New (&lt;30d)</th><th class="c">Since last scan</th></tr></thead><tbody id="tb"></tbody></table></div></div>`;
+  paintTrends();
+}
+function paintTrends() {
+  const h = S.current, q = S.search.trim().toLowerCase(), tb = $("#tb");
+  if (!tb) return;
+  const rows = (h.themes || []).map((t, i) => ({ ...t, rank: i + 1 })).filter(t => !q || t.theme.toLowerCase().includes(q));
+  tb.innerHTML = rows.map(t => {
+    const word = t.opp >= 70 ? "Great" : t.opp >= 40 ? "Good" : t.opp >= 20 ? "OK" : "Low";
+    const m = t.momentum;
+    const mom = m >= 1.2 ? `<span class="up">▲ ${m.toFixed(1)}×</span>` : m <= 0.8 ? `<span class="down">▼ ${m.toFixed(1)}×</span>` : `<span class="muted">${m.toFixed(1)}×</span>`;
+    const c = t.change;
+    const chg = c == null ? `<span class="muted">—</span>` : c === 0 ? `<span class="muted">same</span>` : c > 0 ? `<span class="up">▲ ${c}</span>` : `<span class="down">▼ ${-c}</span>`;
+    return `<tr class="click" data-t="${esc(t.theme)}"><td class="c num-c">${t.rank}</td><td><b>${esc(t.theme)}</b></td>
+      <td><div class="opp ${t.opp >= 70 ? "great" : ""}"><i><b style="width:${t.opp}%"></b></i><span>${t.opp} · ${word}</span></div></td>
+      <td class="c">${t.n}</td><td class="c">${mom}</td><td class="c"><span class="pill ${t.competition}">${t.competition}</span></td>
+      <td class="c">${Math.round(100 * t.fresh)}%</td><td class="c">${chg}</td></tr>`;
+  }).join("") || `<tr><td colspan="8" class="muted" style="text-align:center;padding:30px">No themes match “${esc(S.search)}”.</td></tr>`;
+  tb.querySelectorAll("tr.click").forEach(tr => tr.onclick = () => call("open_url", "https://www.roblox.com/catalog?Keyword=" + encodeURIComponent(tr.dataset.t)));
+}
+
+/* ---------- momentum ---------- */
+/* Every scan is a point in time. For each theme / item we chart its share of all bestseller
+   activity (how much of what's selling it accounts for). The slider scrubs through the scans. */
+const MOM = { data: null, loading: false, kind: "themes", range: "all", idx: null, table: false, play: null,
+  sel: { themes: [], items: [] }, slot: { themes: {}, items: {} } };
+const MOM_SLOTS = 6, DAY = 864e5;
+const momPts = () => MOM.data?.points || [];
+const momT = i => new Date(momPts()[i]).getTime();
+function momWindow() {
+  const n = momPts().length; if (!n) return [0, -1];
+  const span = { all: Infinity, "30": 30 * DAY, "7": 7 * DAY }[MOM.range];
+  let a = 0; const last = momT(n - 1);
+  while (a < n - 1 && last - momT(a) > span) a++;
+  return [a, n - 1];
+}
+function momFmtDate(i, long = false) {
+  const d = new Date(momPts()[i]);
+  return d.toLocaleString("en-GB", long ? { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }
+    : { day: "numeric", month: "short" });
+}
+const momPct = v => v == null ? "—" : (v >= 10 ? v.toFixed(1) : v >= 1 ? v.toFixed(2) : v.toFixed(3).replace(/0$/, "")) + "%";
+function momBase(i) {                       // the scan we compare against: ~3 days earlier (or the one before)
+  if (i <= 0) return null;
+  const want = momT(i) - 3 * DAY; let j = i - 1;
+  while (j > 0 && momT(j - 1) >= want) j--;
+  return j;
+}
+function momChange(s, i) {
+  const j = momBase(i);
+  if (j == null) {                          // only one scan so far: use "today vs this week"
+    const m = s.m[i]; return m == null ? null : { mom: m };
+  }
+  return { d: s.v[i] - s.v[j], from: j, was: s.v[j], now: s.v[i] };
+}
+function momDeltaHtml(ch) {
+  if (!ch) return `<span class="muted">—</span>`;
+  if (ch.mom != null) {
+    const m = ch.mom;
+    return m >= 1.15 ? `<span class="up">▲ ${m.toFixed(1)}×</span>` : m <= 0.87 ? `<span class="down">▼ ${m.toFixed(1)}×</span>` : `<span class="muted">${m.toFixed(1)}×</span>`;
+  }
+  if (ch.was < 0.001) return ch.now < 0.001 ? `<span class="muted">—</span>` : `<span class="up">▲ New</span>`;
+  const rel = 100 * ch.d / ch.was, a = Math.abs(rel);
+  const txt = a >= 999 ? "999+%" : (a >= 10 ? Math.round(a) : a.toFixed(1)) + "%";
+  return a < 0.5 ? `<span class="muted">same</span>` : rel > 0 ? `<span class="up">▲ ${txt}</span>` : `<span class="down">▼ ${txt}</span>`;
+}
+const momColor = (kind, key) => MOM.slot[kind][key] ? `var(--s${MOM.slot[kind][key]})` : null;
+function momToggle(key) {
+  const k = MOM.kind, sel = MOM.sel[k];
+  const at = sel.indexOf(key);
+  if (at >= 0) { sel.splice(at, 1); delete MOM.slot[k][key]; }
+  else {
+    if (sel.length >= MOM_SLOTS) { toast(`Up to ${MOM_SLOTS} lines at once. Remove one from the chart first.`); return; }
+    const used = new Set(Object.values(MOM.slot[k]));
+    let n = 1; while (used.has(n)) n++;
+    sel.push(key); MOM.slot[k][key] = n;
+  }
+  paintMomentum();
+}
+function momSeries() { return MOM.data?.[MOM.kind] || []; }
+function momDefaults() {
+  const k = MOM.kind; if (MOM.sel[k].length) return;
+  const n = momPts().length - 1;
+  momSeries().slice().sort((a, b) => b.v[n] - a.v[n]).slice(0, 4).forEach(s => {
+    MOM.sel[k].push(s.key); MOM.slot[k][s.key] = MOM.sel[k].length;
+  });
+}
+
+async function renderMomentum() {
+  const el = $("#p-momentum");
+  $("#h-actions").innerHTML = chips("mo-kind", [["themes", "Themes"], ["items", "Items"]], MOM.kind);
+  wireChips("mo-kind", v => { momStop(); MOM.kind = v; momDefaults(); paintMomentum(true); });
+  if (!MOM.data) {
+    el.innerHTML = `<div class="skel" style="height:86px;margin-bottom:14px"></div><div class="skel" style="height:420px"></div>`;
+    if (!MOM.loading) {
+      MOM.loading = true;
+      MOM.data = await call("momentum") || { points: [], themes: [], items: [] };
+      MOM.loading = false; MOM.idx = null;
+      for (const k of ["themes", "items"]) {        // drop picks that no longer exist
+        const keys = new Set((MOM.data[k] || []).map(s => s.key));
+        MOM.sel[k] = MOM.sel[k].filter(x => keys.has(x));
+        for (const x of Object.keys(MOM.slot[k])) if (!keys.has(x)) delete MOM.slot[k][x];
+      }
+      if (S.page === "momentum") renderMomentum();
+    }
+    return;
+  }
+  if (!momPts().length) {
+    el.innerHTML = emptyState(ICON.momentum, "No scans yet", "Run a scan and the momentum charts will start filling in."); wireEmpty(); return;
+  }
+  momDefaults();
+  paintMomentum(true);
+}
+
+function paintMomentum(full = false) {
+  const el = $("#p-momentum"); if (!el || !MOM.data) return;
+  const pts = momPts(), n = pts.length, [a, b] = momWindow();
+  if (MOM.idx == null || MOM.idx > b || MOM.idx < a) MOM.idx = b;
+  const one = n < 2;
+  const autoOn = +S.state?.settings?.auto_scan_hours > 0;
+  if (full || !$("#mo-up")) {
+    el.innerHTML = `
+    <div class="stats-row">
+      <div class="stat"><span>Scans in the chart</span><b>${n}</b></div>
+      <div class="stat"><span>Time covered</span><b>${one ? "One scan" : momSpan(momT(n - 1) - momT(0))}</b></div>
+      <div class="stat"><span>Rising fastest</span><b id="mo-s-up">—</b></div>
+      <div class="stat"><span>Cooling fastest</span><b id="mo-s-down">—</b></div>
+    </div>
+    ${one ? `<div class="card mo-note"><div class="ic">${ICON.momentum}</div><div><b>The chart needs at least two scans</b>
+      <p>Each scan adds a point to the timeline. Until there's a second one, the lists below compare sales from the past day with the past week.</p></div>
+      ${autoOn ? "" : `<button class="btn primary sm" id="mo-auto">Scan automatically every 6 hours</button>`}</div>` : `
+    <div class="card mo-card">
+      <div class="mo-top">
+        <div class="when"><b id="mo-when"></b><span>Share of all bestseller activity${MOM.data.scope ? " · " + esc(MOM.data.scope) : ""}</span></div>
+        ${chips("mo-rng", [["all", "All"], ["30", "30 days"], ["7", "7 days"]], MOM.range)}
+        <button class="btn sm" id="mo-tbl" title="Show the numbers as a table">${ICON.table} Table</button>
+      </div>
+      ${!autoOn && n < 12 ? `<div class="mo-tipbar"><span><b>Tip:</b> turn on automatic scans and this chart fills in by itself.</span><button class="btn sm primary" id="mo-auto2">Scan every 6 hours</button></div>` : ""}
+      <div class="mo-legend" id="mo-legend"></div>
+      <div class="mo-chart" id="mo-chart"></div>
+      <div class="mo-slider">
+        <button class="mo-play" id="mo-play" title="Play through time" aria-label="Play through time">${ICON.play}</button>
+        <input type="range" class="mo-range" id="mo-range" aria-label="Point in time" min="${a}" max="${b}" step="1" value="${MOM.idx}">
+        <span class="mo-pos" id="mo-pos"></span>
+      </div>
+      <div class="mo-table" id="mo-table" style="display:${MOM.table ? "block" : "none"}"></div>
+    </div>`}
+    <div class="mo-cols">
+      <div class="card"><div class="card-h">Going well <small id="mo-cmp-up"></small></div><div class="mo-list" id="mo-up"></div></div>
+      <div class="card"><div class="card-h">Cooling off <small id="mo-cmp-down"></small></div><div class="mo-list" id="mo-down"></div></div>
+    </div>`;
+    if (one) {
+      const btn = $("#mo-auto");
+      if (btn) btn.onclick = async () => { S.state.settings = await call("save_settings", { auto_scan_hours: 6 }) || S.state.settings; updateStatus(); btn.remove(); toast("Automatic scans are on: every 6 hours.", "ok"); };
+    } else {
+      wireChips("mo-rng", v => { momStop(); MOM.range = v; MOM.idx = null; paintMomentum(true); });
+      const a2 = $("#mo-auto2");
+      if (a2) a2.onclick = async () => { S.state.settings = await call("save_settings", { auto_scan_hours: 6 }) || S.state.settings; updateStatus(); a2.closest(".mo-tipbar").remove(); toast("Automatic scans are on: every 6 hours.", "ok"); };
+      $("#mo-tbl").onclick = () => { MOM.table = !MOM.table; $("#mo-table").style.display = MOM.table ? "block" : "none"; momTable(); };
+      const r = $("#mo-range");
+      r.oninput = () => { momStop(); momSetIdx(+r.value); };
+      $("#mo-play").onclick = () => MOM.play ? momStop() : momPlay();
+      const ch = $("#mo-chart");
+      const pick = e => {
+        const g = MOM.geo; if (!g) return;
+        const x = e.clientX - ch.getBoundingClientRect().left;
+        let best = g.a, bd = Infinity;
+        for (let i = g.a; i <= g.b; i++) { const d = Math.abs(g.x(i) - x); if (d < bd) { bd = d; best = i; } }
+        if (best !== MOM.idx) { momStop(); momSetIdx(best); }
+      };
+      ch.onpointerdown = e => { ch.setPointerCapture(e.pointerId); pick(e); };
+      ch.onpointermove = pick;
+    }
+  }
+  momLegend(); momChart(); momLists(); momTable();
+}
+function momSpan(ms) {
+  const h = ms / 36e5;
+  if (h < 1) return `${Math.max(1, Math.round(ms / 6e4))} min`;
+  if (h < 48) return `${Math.round(h)} hour${Math.round(h) === 1 ? "" : "s"}`;
+  return `${Math.round(h / 24)} days`;
+}
+function momSetIdx(i) {
+  MOM.idx = i;
+  const r = $("#mo-range"); if (r && +r.value !== i) r.value = i;
+  momChart(); momLists(); momTable();
+}
+function momPlay() {
+  const [a, b] = momWindow();
+  if (MOM.idx >= b) momSetIdx(a);
+  $("#mo-play").innerHTML = ICON.stop;
+  MOM.play = setInterval(() => {
+    if (S.page !== "momentum" || !$("#mo-range")) return momStop();
+    if (MOM.idx >= momWindow()[1]) return momStop();
+    momSetIdx(MOM.idx + 1);
+  }, Math.max(140, Math.min(600, 6000 / Math.max(1, b - a))));
+}
+function momStop() {
+  if (MOM.play) { clearInterval(MOM.play); MOM.play = null; }
+  const p = $("#mo-play"); if (p) p.innerHTML = ICON.play;
+}
+function momLegend() {
+  const el = $("#mo-legend"); if (!el) return;
+  const k = MOM.kind, list = momSeries();
+  el.innerHTML = MOM.sel[k].map(key => {
+    const s = list.find(x => x.key === key); if (!s) return "";
+    return `<button class="mo-leg" data-k="${esc(key)}" title="Remove from chart"><i style="background:${momColor(k, key)}"></i><span>${esc(k === "themes" ? title(s.name) : s.name)}</span><u>×</u></button>`;
+  }).join("") + `<span class="mo-hint">${MOM.sel[k].length ? "Click a row below to add or remove lines." : "Click a row below to put it on the chart."}</span>`;
+  el.querySelectorAll(".mo-leg").forEach(b => b.onclick = () => momToggle(b.dataset.k));
+}
+
+function momChart() {
+  const box = $("#mo-chart"); if (!box) return;
+  const k = MOM.kind, list = momSeries(), [a, b] = momWindow(), i0 = MOM.idx;
+  const sel = MOM.sel[k].map(key => list.find(s => s.key === key)).filter(Boolean);
+  const W = Math.max(320, box.clientWidth), H = box.clientHeight || 310;
+  const labels = sel.length && sel.length <= 4;
+  const P = { l: 46, r: labels ? 146 : 14, t: 12, b: 26 };
+  const t0 = momT(a), t1 = momT(b), span = Math.max(1, t1 - t0);
+  const x = i => b === a ? P.l + (W - P.l - P.r) / 2 : P.l + (momT(i) - t0) / span * (W - P.l - P.r);
+  let max = 0;
+  sel.forEach(s => { for (let i = a; i <= b; i++) max = Math.max(max, s.v[i]); });
+  const step = (() => { const raw = Math.max(max, 0.01) / 5, p = 10 ** Math.floor(Math.log10(raw)), f = raw / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p; })();
+  const top = step * Math.max(2, Math.ceil(max * 1.06 / step));
+  const y = v => P.t + (1 - v / top) * (H - P.t - P.b);
+  MOM.geo = { a, b, x };
+  let g = "";
+  for (let j = 0; j <= Math.round(top / step); j++) {
+    const v = step * j, yy = y(v);
+    g += `<line class="${j ? "gl" : "base"}" x1="${P.l}" x2="${W - P.r}" y1="${yy}" y2="${yy}"/>`;
+    g += `<text x="${P.l - 8}" y="${yy + 4}" text-anchor="end">${+(v.toPrecision(3))}%</text>`;
+  }
+  // date ticks: about one every 110px, never two on the same day label
+  const want = Math.max(2, Math.floor((W - P.l - P.r) / 110));
+  const short = span < 2 * DAY;
+  let lastX = -1e9, lastLab = "";
+  for (let n = 0; n <= want; n++) {
+    const tt = t0 + span * n / want;
+    let i = a; for (let j = a; j <= b; j++) if (Math.abs(momT(j) - tt) < Math.abs(momT(i) - tt)) i = j;
+    const d = new Date(momPts()[i]);
+    const lab = short ? d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) : d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+    const xx = x(i);
+    if (xx - lastX < 60 || lab === lastLab) continue;
+    g += `<text x="${xx}" y="${H - 6}" text-anchor="${xx < P.l + 20 ? "start" : xx > W - P.r - 20 ? "end" : "middle"}">${esc(lab)}</text>`;
+    lastX = xx; lastLab = lab;
+  }
+  // lines
+  sel.forEach(s => {
+    let d = "";
+    for (let i = a; i <= b; i++) d += `${i === a ? "M" : "L"}${x(i).toFixed(1)},${y(s.v[i]).toFixed(1)}`;
+    g += `<path class="ln" d="${d}" stroke="${momColor(k, s.key)}"/>`;
+    if (b - a <= 40) for (let i = a; i <= b; i++) g += `<circle cx="${x(i).toFixed(1)}" cy="${y(s.v[i]).toFixed(1)}" r="3" fill="${momColor(k, s.key)}" stroke="var(--card)" stroke-width="1.5"/>`;
+  });
+  // everything after the slider point is dimmed, so "back then" reads clearly
+  const cx = x(i0);
+  if (i0 < b) g += `<rect class="future" x="${cx}" y="${P.t - 4}" width="${W - P.r - cx + 2}" height="${H - P.t - P.b + 4}"/>`;
+  // end labels (direct labels) for up to 4 lines, nudged apart so they never overlap
+  if (labels) {
+    const ls = sel.map(s => ({ s, yy: y(s.v[b]) })).sort((p, q) => p.yy - q.yy);
+    for (let j = 1; j < ls.length; j++) if (ls[j].yy - ls[j - 1].yy < 15) ls[j].yy = ls[j - 1].yy + 15;
+    const over = ls.length ? ls[ls.length - 1].yy - (H - P.b) : 0;
+    if (over > 0) ls.forEach(l => l.yy -= over);
+    ls.forEach(({ s, yy }) => {
+      const nm = k === "themes" ? title(s.name) : s.name;
+      g += `<text class="dl" x="${W - P.r + 10}" y="${yy + 4}">${esc(nm.length > 18 ? nm.slice(0, 17) + "…" : nm)}</text>`;
+    });
+  }
+  g += `<line class="cur" x1="${cx}" x2="${cx}" y1="${P.t - 4}" y2="${H - P.b}"/>`;
+  sel.forEach(s => g += `<circle class="dot" cx="${cx}" cy="${y(s.v[i0])}" r="5" fill="${momColor(k, s.key)}"/>`);
+  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Share of bestseller activity over time">${g}</svg>` +
+    (sel.length ? `<div class="mo-tip" id="mo-tip"></div>` : `<div class="mo-none" style="position:absolute;inset:40% 0 auto">Pick something from the lists below to chart it.</div>`);
+  // readout at the slider point
+  const tip = $("#mo-tip");
+  if (tip) {
+    const rows = sel.map(s => ({ s, v: s.v[i0], ch: momChange(s, i0) })).sort((p, q) => q.v - p.v);
+    tip.innerHTML = `<div class="h">${esc(momFmtDate(i0, true))}</div>` + rows.map(({ s, v, ch }) =>
+      `<div class="r"><i style="background:${momColor(k, s.key)}"></i><span>${esc(k === "themes" ? title(s.name) : s.name)}</span><b>${momPct(v)}</b><em>${momDeltaHtml(ch)}</em></div>`).join("");
+    const tw = tip.offsetWidth || 220;
+    tip.style.left = (cx + 14 + tw < W - 4 ? cx + 14 : Math.max(4, cx - 14 - tw)) + "px";
+    const avgY = sel.reduce((t, s) => t + y(s.v[i0]), 0) / Math.max(1, sel.length);
+    tip.style.top = avgY < (H - P.b) / 2 ? Math.max(8, H - P.b - tip.offsetHeight - 8) + "px" : "8px";
+  }
+  const when = $("#mo-when"); if (when) when.textContent = momFmtDate(i0, true);
+  const pos = $("#mo-pos"); if (pos) pos.textContent = i0 === b ? "Latest scan" : `${ago(momPts()[i0])}`;
+  const r = $("#mo-range"); if (r) r.style.setProperty("--fill", b === a ? "100%" : `${100 * (i0 - a) / (b - a)}%`);
+}
+
+function momSpark(s, a, i, color) {
+  const n = i - a + 1;
+  if (n < 2) return `<svg viewBox="0 0 84 26"></svg>`;
+  let mx = 0, mn = Infinity;
+  for (let j = a; j <= i; j++) { mx = Math.max(mx, s.v[j]); mn = Math.min(mn, s.v[j]); }
+  const rg = Math.max(mx - mn, mx * 0.05, 1e-6);
+  let d = "";
+  for (let j = a; j <= i; j++) d += `${j === a ? "M" : "L"}${(2 + 80 * (j - a) / (n - 1)).toFixed(1)},${(23 - 20 * (s.v[j] - mn) / rg).toFixed(1)}`;
+  return `<svg viewBox="0 0 84 26" aria-hidden="true"><path d="${d}" stroke="${color || "var(--muted)"}"/></svg>`;
+}
+function momLists() {
+  const up = $("#mo-up"), down = $("#mo-down"); if (!up) return;
+  const k = MOM.kind, i = MOM.idx, [a] = momWindow(), list = momSeries();
+  const rows = list.map(s => ({ s, ch: momChange(s, i) })).filter(r => r.ch && s0(r.s, i));
+  function s0(s, i) { return s.v[i] > 0 || (i > 0 && s.v[i - 1] > 0); }
+  const score = r => r.ch.mom != null ? r.ch.mom - 1 : r.ch.d;
+  const rising = rows.filter(r => score(r) > (r.ch.mom != null ? 0.15 : 0)).sort((p, q) => score(q) - score(p)).slice(0, 8);
+  const falling = rows.filter(r => score(r) < (r.ch.mom != null ? -0.13 : 0)).sort((p, q) => score(p) - score(q)).slice(0, 8);
+  const base = momBase(i);
+  const cmp = base == null ? "today vs. this week" : `vs. ${momFmtDate(base, true)}`;
+  $("#mo-cmp-up").textContent = cmp; $("#mo-cmp-down").textContent = cmp;
+  $("#mo-s-up").textContent = rising[0] ? (k === "themes" ? title(rising[0].s.name) : rising[0].s.name) : "—";
+  $("#mo-s-down").textContent = falling[0] ? (k === "themes" ? title(falling[0].s.name) : falling[0].s.name) : "—";
+  const row = ({ s, ch }) => {
+    const col = momPts().length > 1 ? momColor(k, s.key) : null, on = !!col;
+    const nm = k === "themes" ? title(s.name) : s.name;
+    const sub = k === "themes" ? `${s.n} bestseller${s.n === 1 ? "" : "s"}` : `${s.type} · ${s.price}`;
+    const lead = k === "items" ? imgBox(null, "", s.id) : `<i class="mk" style="${on ? `background:${col};border-color:${col}` : ""}"></i>`;
+    return `<div class="mo-row ${on ? "on" : ""}" data-k="${esc(s.key)}" title="${on ? "Remove from chart" : "Add to chart"}">${lead}
+      <div class="nm"><b>${esc(nm)}</b><span>${esc(sub)}</span></div>${momSpark(s, a, i, col)}
+      <div class="val">${momPct(s.v[i])}</div><div class="dl">${momDeltaHtml(ch)}</div></div>`;
+  };
+  up.innerHTML = rising.map(row).join("") || `<div class="mo-none">Nothing is clearly climbing at this point.</div>`;
+  down.innerHTML = falling.map(row).join("") || `<div class="mo-none">Nothing is clearly slowing down at this point.</div>`;
+  [up, down].forEach(el => {
+    el.querySelectorAll(".mo-row").forEach(r => r.onclick = () => {
+      if (momPts().length < 2) { if (k === "themes") call("open_url", "https://www.roblox.com/catalog?Keyword=" + encodeURIComponent(r.dataset.k));
+        else { const s = list.find(x => x.key === r.dataset.k); s && lightbox({ ...s, thumb: null }); } return; }
+      momToggle(r.dataset.k);
+    });
+    wireImages(el);
+  });
+}
+function momTable() {
+  const el = $("#mo-table"); if (!el || !MOM.table) return;
+  const k = MOM.kind, list = momSeries(), [a, b] = momWindow();
+  const sel = MOM.sel[k].map(key => list.find(s => s.key === key)).filter(Boolean);
+  if (!sel.length) { el.innerHTML = `<div class="mo-none">Nothing on the chart yet.</div>`; return; }
+  let rows = "";
+  for (let i = b; i >= a; i--) rows += `<tr${i === MOM.idx ? ` style="background:var(--soft)"` : ""}><td>${esc(momFmtDate(i, true))}</td>${sel.map(s => `<td class="c">${momPct(s.v[i])}</td>`).join("")}</tr>`;
+  el.innerHTML = `<table><thead><tr><th>Scan</th>${sel.map(s => `<th class="c">${esc(k === "themes" ? title(s.name) : s.name)}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table>`;
+}
+window.addEventListener("resize", () => { if (S.page === "momentum" && MOM.data) momChart(); });
+
+/* ---------- history ---------- */
+function renderHistory() {
+  const el = $("#p-history"), hist = S.state.history;
+  $("#h-actions").innerHTML = `<button class="btn sm" id="b-folder">${ICON.folder} Open folder</button>`;
+  $("#b-folder").onclick = () => call("open_folder");
+  if (!hist.length) { el.innerHTML = emptyState(ICON.history, "No scans yet", "Every scan you run is saved here."); wireEmpty(); return; }
+  el.innerHTML = `<div class="card"><div class="table-wrap"><table><thead><tr><th>Date</th><th>Scope</th><th>Top idea</th><th class="c">Items</th><th></th></tr></thead><tbody>${
+    hist.map((h, i) => `<tr data-i="${i}"><td class="wrap"><b>${esc(h.label_long)}</b> <span class="muted">· ${esc(ago(h.iso))}</span>${h.id === S.currentId ? ` <span class="tag" style="margin-left:6px">viewing</span>` : ""}</td>
+      <td class="wrap">${esc(h.scope)}</td><td class="wrap">${esc(h.top)}</td><td class="c">${fmtNum(h.n_items)}</td>
+      <td><div class="row-actions"><button class="btn sm primary b-view">View ideas</button><button class="btn sm b-rep">Report</button>
+      <button class="btn sm danger b-del">Delete</button></div></td></tr>`).join("")}</tbody></table></div></div>`;
+  el.querySelectorAll("tr[data-i]").forEach(tr => {
+    const h = hist[+tr.dataset.i];
+    tr.querySelector(".b-view").onclick = async () => { await selectScan(h.id); show("ideas"); };
+    tr.querySelector(".b-rep").onclick = () => call("open_report", h.id);
+    tr.querySelector(".b-del").onclick = async () => {
+      const a = await modal("Delete this scan?", `This removes the report from ${h.label_long}. It can't be undone.`, [["Cancel", ""], ["Delete", "primary"]]);
+      if (a !== "Delete") return;
+      await call("delete_scan", h.id);
+      if (S.currentId === h.id) { S.currentId = null; S.current = null; }
+      await refreshState(); renderHistory(); toast("Scan deleted.");
+    };
+  });
+}
+
+/* ---------- settings ---------- */
+function renderSettings() {
+  const st = S.state, s = st.settings;
+  $("#p-settings").innerHTML = `
+  <div class="card"><div class="card-h">Appearance</div><div class="card-b">
+    <div class="field"><label>Color theme</label><p class="hint">Changes the whole app, including the window's title bar.</p>
+      <div class="themes" id="themes">${THEMES.map(t => `<div class="theme ${t.key === (s.theme || "midnight") ? "on" : ""}" data-t="${t.key}">
+        <div class="pv" style="background:${t.bg}"><div class="s" style="background:${t.side}"><i style="background:${t.accent}"></i><i style="background:${t.muted}"></i><i style="background:${t.muted}"></i></div>
+        <div class="m"><b style="background:${t.card}"></b><u style="background:${t.accent}"></u></div></div>
+        <div class="nm">${esc(t.label)}<span style="background:${t.accent}"></span></div></div>`).join("")}</div></div>
+  </div></div>
+  <div class="card"><div class="card-h">Scanning</div><div class="card-b">
+    <div class="field"><label>Request pace</label><p class="hint">How long to wait between requests to Roblox. Slower means fewer “slow down” pauses.</p>
+      ${chips("c-gap", [[5, "Careful · 5 s"], [3, "Normal · 3 s"], [2, "Faster · 2 s"]], s.gap)}</div>
+    <div class="field"><label>Automatic scans</label><p class="hint">Scans on its own while the app is open or in the tray, and notifies you when new ideas are ready.</p>
+      ${chips("c-auto", [[0, "Off"], [6, "Every 6 h"], [12, "Every 12 h"], [24, "Every 24 h"]], s.auto_scan_hours)}</div>
+  </div></div>
+  <div class="card"><div class="card-h">App</div><div class="card-b">
+    <div class="field">${toggle("t-tray", "Keep running in the tray when I close the window", "Right-click the tray icon to open the app, scan, or quit.", s.close_to_tray)}</div>
+    <div class="field">${toggle("t-report", "Open the full report in my browser after each scan", "", s.open_report)}</div>
+    <div class="field flex"><div><label>Quit the app</label><p class="hint" style="margin:0">Closes UGC Trend Finder completely, including the tray icon. Shortcut: Ctrl+Q.</p></div>
+      <button class="btn sm danger" id="b-quit" style="margin-left:auto">Quit app</button></div>
+    ${st.frozen ? "" : `<div class="field"><label>Desktop shortcut</label><p class="hint">Adds a UGC Trend Finder icon to your desktop.</p>
+      <button class="btn" id="b-short">Create desktop shortcut</button></div>`}
+  </div></div>
+  <div class="card"><div class="card-h">Updates</div><div class="card-b">
+    <div class="field">${toggle("t-upd", "Install updates automatically", "Off: the app tells you when a new version is ready and you choose when to update. On: it updates on its own.", s.auto_install)}</div>
+    <div class="field flex"><span>You have <b>version ${esc(st.version)}</b>.</span><span class="muted" id="upd-status">${esc(st.update_status || "")}</span>
+      <button class="btn sm" id="b-upd" style="margin-left:auto">Check for updates</button></div>
+  </div></div>
+  <div class="card"><div class="card-h">Storage</div><div class="card-b">
+    <div class="field"><label>Where reports are saved</label><div class="flex" style="margin-top:8px"><div class="path" id="outdir">${esc(s.out_dir)}</div>
+      <button class="btn" id="b-chg">Change…</button><button class="btn" id="b-open">Open</button></div></div>
+  </div></div>`;
+  const save = async patch => { const r = await call("save_settings", patch); if (r) S.state.settings = r; updateStatus(); };
+  wireChips("c-gap", v => save({ gap: +v }));
+  wireChips("c-auto", v => save({ auto_scan_hours: +v }));
+  wireToggle("t-tray", v => save({ close_to_tray: v }));
+  wireToggle("t-report", v => save({ open_report: v }));
+  wireToggle("t-upd", v => save({ auto_install: v }));
+  document.querySelectorAll("#themes .theme").forEach(el => el.onclick = () => {
+    document.querySelectorAll("#themes .theme").forEach(x => x.classList.toggle("on", x === el));
+    applyTheme(el.dataset.t);
+    S.state.settings.theme = el.dataset.t;
+    call("set_theme", el.dataset.t);
+  });
+  const bs = $("#b-short");
+  if (bs) bs.onclick = async () => { const r = await call("create_shortcut"); if (r) r.ok ? toast("Shortcut added to your desktop.", "ok") : modal("Couldn't create the shortcut", r.error); };
+  $("#b-upd").onclick = async () => {
+    $("#upd-status").textContent = "Checking…";
+    const r = await call("check_update");
+    $("#upd-status").textContent = r?.message || "";
+    if (r?.info) showUpdate(r.info);
+  };
+  $("#b-chg").onclick = async () => { const d = await call("change_folder"); if (d) { S.state.settings.out_dir = d; $("#outdir").textContent = d; S.currentId = null; S.current = null; await refreshState(); } };
+  $("#b-open").onclick = () => call("open_folder");
+  $("#b-quit").onclick = () => call("quit_app");
+}
+
+/* ---------- help ---------- */
+function renderHelp() {
+  const sec = [
+    ["It reads the marketplace", "Each scan reads four Roblox catalog lists: bestselling today, bestselling this week, most favorited this week, and the newest uploads. Requests are spaced a few seconds apart so Roblox doesn't rate-limit you. If it does, the app pauses, shows a countdown, and continues more slowly on its own."],
+    ["It finds themes", "It pulls themes out of item names, like “y2k”, “emo”, “cat ears” or “angel wings”, and colors like “pink” or “black”."],
+    ["Demand and competition", "A theme scores demand when its items sit high in the bestseller lists. Roblox doesn't share exact sales numbers, so ranking position is the signal. Competition is how often the theme shows up in the newest uploads. High demand with few new uploads is where the chances are."],
+    ["Proven combo vs. open gap", "A proven combo already sells as that item type, so buyers clearly want it. An open gap is a theme that's hot on other item types but barely exists as this one yet."],
+    ["Momentum and “since last scan”", "Momentum compares today's sales with the weekly average; above 1× means rising. “Since last scan” shows how a theme's rank moved compared with your previous scan."],
+    ["Tray, automatic scans and updates", "Closing the window keeps the app in the system tray (next to the clock). Right-click the tray icon to open it, scan, or quit. With automatic scans on, it scans on schedule and notifies you. When a new version is out, the app tells you and you choose when to update."],
+    ["My list", "Press “Save to my list” on any idea to keep it. Give each one a status (To do, Making, Uploaded, Skipped) and your own notes, and see at a glance whether its theme is still trending in your latest scan."],
+    ["Momentum", "Every scan is a point in time. The Momentum page charts how much of all bestseller activity a theme or item holds across your scans. Drag the slider to see how it was doing at any moment. Automatic scans make this chart fill in by itself."],
+    ["Keyboard shortcuts", "Ctrl+N new scan · Ctrl+1 to Ctrl+6 switch pages · Ctrl+R open the full report · Ctrl+Q quit."],
+    ["Keep in mind", "These are data-backed ideas, not guaranteed sales. New trends take a few days to show up. Always check the example items first, and never copy other creators' designs or use brands and characters you don't own. That gets items taken down."],
+  ];
+  $("#p-help").innerHTML = `<div class="help">${sec.map(([t, p]) => `<div class="card"><div class="card-b"><h3>${esc(t)}</h3><p>${esc(p)}</p></div></div>`).join("")}</div>`;
+}
+
+/* ---------- updates ---------- */
+const UPD_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>';
+function showUpdate(info, force = false) {
+  if (!info || !info.available) return;
+  S.update = info;
+  if (S.booting && !force) return;          // shown once the startup screen and "what's new" are done
+  const pill = $("#st-upd");
+  pill.querySelector("span").textContent = `Update to v${info.version}`;
+  pill.classList.add("show");
+  pill.onclick = () => showUpdate(info, true);
+  if (S.updDismissed === info.version && !force) return;
+  const notes = (info.notes || "").trim();
+  const pop = $("#upd-pop");
+  pop.innerHTML = `<div class="top"><div class="ic">${UPD_ICON}</div><div><h3>Update available</h3>
+      <p>Version ${esc(info.version)} is ready. You have ${esc(S.state?.version || "")}.</p></div>
+      <button class="x" id="upd-x" title="Later">✕</button></div>
+    ${notes ? `<div class="notes selectable">${esc(notes)}</div>` : ""}
+    <div class="btns"><button class="btn sm" id="upd-later">Later</button><button class="btn primary sm" id="upd-now">Update now</button></div>`;
+  pop.classList.add("show");
+  const later = () => { S.updDismissed = info.version; pop.classList.remove("show"); };
+  $("#upd-x").onclick = later;
+  $("#upd-later").onclick = later;
+  $("#upd-now").onclick = () => { pop.classList.remove("show"); call("install_update"); };
+}
+function updateProgress(ev) {
+  const o = $("#overlay");
+  if (ev.stage === "failed") { o.classList.remove("show"); o.innerHTML = ""; modal("Update didn't install", ev.msg || "Try again later."); return; }
+  if (!o.querySelector(".upd")) {
+    o.innerHTML = `<div class="modal upd"><h3>Updating UGC Trend Finder</h3><p id="upd-msg"></p><div class="upd-bar"><i id="upd-bar"></i></div></div>`;
+    o.classList.add("show"); o.onclick = null;
+  }
+  $("#upd-msg").textContent = ev.msg || "";
+  $("#upd-bar").style.width = (ev.pct || 0) + "%";
+}
+
+/* ---------- keys & timers ---------- */
+document.addEventListener("keydown", e => {
+  if (!e.ctrlKey || e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+  const k = e.key.toLowerCase();
+  if (k === "n") { e.preventDefault(); show("scan"); }
+  else if (k === "r") { e.preventDefault(); if (S.currentId) call("open_report", S.currentId); }
+  else if (k === "q") { e.preventDefault(); call("quit_app"); }
+  else if (/^[1-6]$/.test(k)) { e.preventDefault(); show(PAGES[+k - 1][0]); }
+});
+document.addEventListener("contextmenu", e => { if (!e.target.closest(".selectable, pre, input, textarea")) e.preventDefault(); });
+setInterval(() => { if (S.run.running) paintProgress(); }, 500);
+setInterval(updateStatus, 5000);
+
+/* ---------- themes ---------- */
+const THEMES = [
+  { key: "midnight", label: "Midnight", bg: "#0f1115", side: "#13161b", card: "#1e222a", accent: "#4a86f0", muted: "#3a404c" },
+  { key: "sakura", label: "Sakura pink", bg: "#151015", side: "#1a1219", card: "#2a1d28", accent: "#ff5fa2", muted: "#4a3646" },
+  { key: "violet", label: "Violet", bg: "#100f16", side: "#15131d", card: "#22202e", accent: "#8b6cff", muted: "#3d3852" },
+  { key: "emerald", label: "Emerald", bg: "#0d1311", side: "#111815", card: "#1b2621", accent: "#2fbf7f", muted: "#34443c" },
+  { key: "sunset", label: "Sunset", bg: "#14100d", side: "#1a1511", card: "#2a211b", accent: "#ff8a3d", muted: "#4a3c31" },
+  { key: "graphite", label: "Graphite", bg: "#111111", side: "#161616", card: "#232323", accent: "#e8e8e8", muted: "#3d3d3d" },
+  { key: "daylight", label: "Daylight", bg: "#f4f5f8", side: "#ffffff", card: "#eef0f4", accent: "#3b7cf0", muted: "#cbd1da" },
+  { key: "blossom", label: "Blossom", bg: "#fdf4f8", side: "#fff8fb", card: "#fbe7f0", accent: "#e0448a", muted: "#ecc9d9" },
+];
+function applyTheme(key) {
+  if (!THEMES.find(t => t.key === key)) key = "midnight";
+  document.documentElement.dataset.theme = key;
+}
+
+/* ---------- startup screen ---------- */
+const bootStart = Date.now();
+const MANAGED = document.documentElement.dataset.launch === "managed";
+let revealResolve = null;
+const revealed = new Promise(r => { revealResolve = r; });
+function splashStep(pct, text) {
+  const b = $("#sp-bar"); if (b) b.style.width = pct + "%";
+  const t = $("#sp-step"); if (t && text) t.textContent = text;
+  if (MANAGED && api) call("boot_progress", pct, text || "");
+}
+async function splashDone() {
+  if (MANAGED) {
+    call("boot_done");
+    await Promise.race([revealed, new Promise(r => setTimeout(r, 30000))]);
+    await new Promise(r => setTimeout(r, 650));        // let the fade-in finish before any popups
+    return;
+  }
+  splashStep(100, "Ready");
+  const wait = Math.max(0, 1400 - (Date.now() - bootStart));
+  await new Promise(r => setTimeout(r, wait + 250));
+  $("#splash").classList.add("hide");
+  setTimeout(() => $("#splash")?.remove(), 600);
+}
+splashStep(12, "Starting…");
+
+/* ---------- boot ---------- */
+async function boot() {
+  if (api) return;
+  api = window.pywebview.api;
+  S.booting = true;
+  splashStep(30, "Loading settings…");
+  buildNav();
+  $("#st-scan").onclick = () => { show("scan"); startScan(); };
+  const st = await call("get_state");
+  if (st) {
+    applyTheme(st.settings.theme);
+    $("#sp-ver").textContent = "Version " + st.version;
+  }
+  splashStep(58, "Reading your scans…");
+  await refreshState();
+  splashStep(82, "Checking for updates…");
+  await new Promise(r => setTimeout(r, 300));
+  $("#p-loading").remove();
+  show(S.state?.history?.length ? "ideas" : "scan");
+  call("ui_ready");
+  await splashDone();
+  const ju = S.state?.just_updated;
+  if (ju) {
+    const notes = await call("release_notes", ju);
+    await modalNotes(`Updated to version ${ju}`, "UGC Trend Finder installed the new version. Here's what changed:", notes || "Improvements and fixes.");
+  }
+  S.booting = false;
+  if (S.update || S.state?.update) showUpdate(S.update || S.state.update);
+}
+if (window.pywebview && window.pywebview.api) boot();
+else window.addEventListener("pywebviewready", boot);
+</script>
+</body>
+</html>

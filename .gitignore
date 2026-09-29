@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+
+# Build output
+build/
+dist/
+Output/
+*.spec
+build_info.json
+
+# Generated at build time
+src/icon.png
+src/icon.ico
+src/splash.png

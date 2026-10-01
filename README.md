@@ -16,7 +16,7 @@ Windows may show "Windows protected your PC" the first time. Click **More info â
 - **Momentum**: charts of how themes and items sell across your scans, with a slider to look back in time.
 - **My list**: save ideas, track them (To do, Making, Uploaded, Skipped) and keep notes.
 - **Automatic scans**: scan every 6, 12 or 24 hours in the background, with a notification when new ideas are ready.
-- **Themes**: Midnight, Sakura pink, Violet, Emerald, Sunset, Graphite, Daylight and Blossom.
+- **Themes**: Midnight, Sakura pink, Violet, Emerald, Sunset, Graphite, Daylight and Blossom, or make your own in Settings by picking four colors.
 - **Tray**: keeps running next to the clock when the window is closed.
 
 ## How it works

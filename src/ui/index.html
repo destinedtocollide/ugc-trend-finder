@@ -427,7 +427,52 @@ td.num-c { color: var(--muted); font-variant-numeric: tabular-nums; width: 40px;
 .theme .pv .m b { display: block; height: 16px; border-radius: 4px; }
 .theme .pv .m u { display: block; height: 8px; width: 55%; border-radius: 4px; }
 .theme .nm { display: flex; align-items: center; justify-content: space-between; padding: 8px 4px 2px; font-weight: 600; font-size: 13px; }
-.theme .nm span { width: 14px; height: 14px; border-radius: 50%; }
+.theme .nm span { width: 14px; height: 14px; border-radius: 50%; flex: none; }
+.theme .nm em { font-style: normal; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.theme { position: relative; }
+.theme .acts { position: absolute; top: 12px; right: 12px; display: flex; gap: 4px; opacity: 0; transition: opacity .15s; }
+.theme:hover .acts, .theme:focus-within .acts { opacity: 1; }
+.theme .acts button { width: 26px; height: 26px; border-radius: 7px; border: 0; display: grid; place-items: center; cursor: pointer;
+  background: rgba(0,0,0,.55); color: #fff; backdrop-filter: blur(4px); }
+.theme .acts button:hover { background: rgba(0,0,0,.78); }
+.theme .acts svg { width: 14px; height: 14px; }
+.theme.add { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 112px;
+  border-style: dashed; color: var(--ink2); background: transparent; font-weight: 600; font-size: 13px; }
+.theme.add:hover { color: var(--ink); border-color: var(--accent); }
+.theme.add i { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-dim); color: var(--accent2); }
+.theme.add svg { width: 18px; height: 18px; }
+.themes-h { display: flex; align-items: baseline; gap: 10px; margin: 22px 0 10px; }
+.themes-h label { margin: 0; }
+/* theme editor: a side panel, so the app behind it shows the theme live */
+.overlay.te-open { background: transparent; backdrop-filter: none; place-items: stretch end; padding: 14px; }
+.te { width: min(380px, 100%); background: var(--card); border: 1px solid var(--line2); border-radius: 16px; box-shadow: 0 30px 80px var(--shadow);
+  display: flex; flex-direction: column; max-height: 100%; animation: slidein .22s var(--ease, ease-out); }
+@keyframes slidein { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+.te-h { padding: 18px 20px 4px; }
+.te-h h3 { margin: 0 0 4px; font: 600 17px var(--font-d); }
+.te-h p { margin: 0; color: var(--ink2); font-size: 12.5px; }
+.te-b { padding: 12px 20px; overflow: auto; display: flex; flex-direction: column; gap: 16px; }
+.te-b > div > label { display: block; font-weight: 600; font-size: 12.5px; margin-bottom: 7px; }
+.te .input { width: 100%; }
+.te .input input { width: 100%; }
+.te-presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.te-presets button { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--line2); cursor: pointer; padding: 0; position: relative; overflow: hidden; }
+.te-presets button i { position: absolute; right: 0; bottom: 0; width: 50%; height: 50%; }
+.te-presets button:hover { border-color: var(--accent); transform: scale(1.08); }
+.te-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); }
+.te-row:first-child { border-top: 0; }
+.te-row .sw { position: relative; width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--line2); overflow: hidden; flex: none; cursor: pointer; }
+.te-row .sw input { position: absolute; inset: -8px; width: calc(100% + 16px); height: calc(100% + 16px); border: 0; padding: 0; cursor: pointer; }
+.te-row .tx { flex: 1; min-width: 0; }
+.te-row .tx b { display: block; font-size: 13px; }
+.te-row .tx small { color: var(--muted); font-size: 11.5px; }
+.te-row .hex { width: 84px; height: 32px; border-radius: 8px; border: 1px solid var(--line2); background: var(--soft); color: var(--ink);
+  font: 12.5px var(--mono); padding: 0 8px; text-transform: lowercase; outline: 0; }
+.te-row .hex:focus { border-color: var(--accent); }
+.te-row .hex.bad { border-color: var(--danger); }
+.te-warn { display: none; gap: 8px; align-items: flex-start; padding: 9px 11px; border-radius: 9px; background: var(--warn-bg); color: var(--warn); font-size: 12.5px; }
+.te-warn.show { display: flex; }
+.te-f { display: flex; gap: 8px; justify-content: flex-end; padding: 14px 20px 18px; border-top: 1px solid var(--line); }
 
 /* help */
 .help { display: grid; gap: 12px; max-width: 880px; }
@@ -651,6 +696,8 @@ const ICON = {
   table: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/></svg>',
   saved: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.5L5 21V4a1 1 0 0 1 1-1z"/></svg>',
   savedOn: '<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.5L5 21V4a1 1 0 0 1 1-1z"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4"/></svg>',
   trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>',
   history: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
   settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
@@ -721,6 +768,7 @@ function toast(msg, kind = "") {
 }
 function modal(titleText, text, buttons = [["OK", "primary"]]) {
   return new Promise(res => {
+    if (teClose) teClose(true);
     const o = $("#overlay");
     o.innerHTML = `<div class="modal"><h3>${esc(titleText)}</h3><p>${esc(text)}</p><div class="btns">${
       buttons.map(([l, k], i) => `<button class="btn ${k}" data-i="${i}">${esc(l)}</button>`).join("")}</div></div>`;
@@ -734,6 +782,7 @@ function modal(titleText, text, buttons = [["OK", "primary"]]) {
 }
 function modalNotes(titleText, text, notes) {
   return new Promise(res => {
+    if (teClose) teClose(true);
     const o = $("#overlay");
     o.innerHTML = `<div class="modal"><h3>${esc(titleText)}</h3><p>${esc(text)}</p>${notes ? `<div class="notes selectable">${esc(notes)}</div><div style="height:18px"></div>` : ""}
       <div class="btns"><button class="btn primary" id="mn-ok">Nice</button></div></div>`;
@@ -744,6 +793,7 @@ function modalNotes(titleText, text, notes) {
   });
 }
 function lightbox(item) {
+  if (teClose) teClose(true);
   const o = $("#overlay");
   o.innerHTML = `<div class="lightbox">${imgBox(item.thumb, "", itemId(item))}<div class="lb-b"><div><b>${esc(item.name)}</b>
     <span>${esc(item.type)} · ${esc(item.price)}${item.creator ? " · by " + esc(item.creator) : ""}</span></div>
@@ -1665,10 +1715,12 @@ function renderSettings() {
   $("#p-settings").innerHTML = `
   <div class="card"><div class="card-h">Appearance</div><div class="card-b">
     <div class="field"><label>Color theme</label><p class="hint">Changes the whole app, including the window's title bar.</p>
-      <div class="themes" id="themes">${THEMES.map(t => `<div class="theme ${t.key === (s.theme || "midnight") ? "on" : ""}" data-t="${t.key}">
-        <div class="pv" style="background:${t.bg}"><div class="s" style="background:${t.side}"><i style="background:${t.accent}"></i><i style="background:${t.muted}"></i><i style="background:${t.muted}"></i></div>
-        <div class="m"><b style="background:${t.card}"></b><u style="background:${t.accent}"></u></div></div>
-        <div class="nm">${esc(t.label)}<span style="background:${t.accent}"></span></div></div>`).join("")}</div></div>
+      <div class="themes" id="themes">${THEMES.map(t => themeTile(t, s.theme)).join("")}</div>
+      <div class="themes-h"><label>Your themes</label><span class="hint" style="margin:0">Pick your own colors. Hover a theme to edit or delete it.</span></div>
+      <div class="themes" id="themes-own">${(s.custom_themes || []).map(c => {
+        const v = deriveTheme(c.base).vars;
+        return themeTile({ key: "custom:" + c.id, label: c.name, bg: v["--bg"], side: v["--side"], card: v["--card2"], accent: v["--accent"], muted: v["--switch-off"] }, s.theme, true);
+      }).join("")}<button class="theme add" id="b-newtheme"><i>${ICON.plus}</i>Create a theme</button></div></div>
   </div></div>
   <div class="card"><div class="card-h">Scanning</div><div class="card-b">
     <div class="field"><label>Request pace</label><p class="hint">How long to wait between requests to Roblox. Slower means fewer “slow down” pauses.</p>
@@ -1699,12 +1751,19 @@ function renderSettings() {
   wireToggle("t-tray", v => save({ close_to_tray: v }));
   wireToggle("t-report", v => save({ open_report: v }));
   wireToggle("t-upd", v => save({ auto_install: v }));
-  document.querySelectorAll("#themes .theme").forEach(el => el.onclick = () => {
-    document.querySelectorAll("#themes .theme").forEach(x => x.classList.toggle("on", x === el));
+  document.querySelectorAll("#themes .theme, #themes-own .theme[data-t]").forEach(el => el.onclick = e => {
+    if (e.target.closest(".acts")) return;
+    document.querySelectorAll(".themes .theme").forEach(x => x.classList.toggle("on", x === el));
     applyTheme(el.dataset.t);
     S.state.settings.theme = el.dataset.t;
     call("set_theme", el.dataset.t);
   });
+  document.querySelectorAll("#themes-own .theme[data-t]").forEach(el => {
+    const c = customOf(el.dataset.t); if (!c) return;
+    el.querySelector(".b-edit").onclick = () => themeEditor(c);
+    el.querySelector(".b-del").onclick = () => deleteTheme(c);
+  });
+  $("#b-newtheme").onclick = () => themeEditor(null);
   const bs = $("#b-short");
   if (bs) bs.onclick = async () => { const r = await call("create_shortcut"); if (r) r.ok ? toast("Shortcut added to your desktop.", "ok") : modal("Couldn't create the shortcut", r.error); };
   $("#b-upd").onclick = async () => {
@@ -1716,6 +1775,14 @@ function renderSettings() {
   $("#b-chg").onclick = async () => { const d = await call("change_folder"); if (d) { S.state.settings.out_dir = d; $("#outdir").textContent = d; S.currentId = null; S.current = null; await refreshState(); } };
   $("#b-open").onclick = () => call("open_folder");
   $("#b-quit").onclick = () => call("quit_app");
+}
+
+function themeTile(t, current, own = false) {
+  return `<div class="theme ${t.key === (current || "midnight") ? "on" : ""}" data-t="${esc(t.key)}" tabindex="0">
+    <div class="pv" style="background:${t.bg}"><div class="s" style="background:${t.side}"><i style="background:${t.accent}"></i><i style="background:${t.muted}"></i><i style="background:${t.muted}"></i></div>
+    <div class="m"><b style="background:${t.card}"></b><u style="background:${t.accent}"></u></div></div>
+    ${own ? `<div class="acts"><button class="b-edit" title="Edit">${ICON.edit}</button><button class="b-del" title="Delete">${ICON.trash}</button></div>` : ""}
+    <div class="nm"><em>${esc(t.label)}</em><span style="background:${t.accent}"></span></div></div>`;
 }
 
 /* ---------- help ---------- */
@@ -1795,9 +1862,176 @@ const THEMES = [
   { key: "daylight", label: "Daylight", bg: "#f4f5f8", side: "#ffffff", card: "#eef0f4", accent: "#3b7cf0", muted: "#cbd1da" },
   { key: "blossom", label: "Blossom", bg: "#fdf4f8", side: "#fff8fb", card: "#fbe7f0", accent: "#e0448a", muted: "#ecc9d9" },
 ];
+/* Base colors of the built-in themes, used as starting points in the theme editor. */
+const THEME_BASE = {
+  midnight: { bg: "#0f1115", card: "#181b21", accent: "#4a86f0", text: "#e8eaee" },
+  sakura: { bg: "#151015", card: "#211720", accent: "#ff5fa2", text: "#f7ecf2" },
+  violet: { bg: "#100f16", card: "#1b1925", accent: "#8b6cff", text: "#ece9f6" },
+  emerald: { bg: "#0d1311", card: "#151e1a", accent: "#2fbf7f", text: "#e6efe9" },
+  sunset: { bg: "#14100d", card: "#211a15", accent: "#ff8a3d", text: "#f4ede7" },
+  graphite: { bg: "#111111", card: "#1c1c1c", accent: "#e8e8e8", text: "#ededed" },
+  daylight: { bg: "#f4f5f8", card: "#ffffff", accent: "#3b7cf0", text: "#1a1d23" },
+  blossom: { bg: "#fdf4f8", card: "#ffffff", accent: "#e0448a", text: "#2a1520" },
+};
+/* ---- color math ---- */
+const rgbOf = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const hexOf = c => "#" + c.map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0")).join("");
+const mixC = (a, b, t) => { const x = rgbOf(a), y = rgbOf(b); return hexOf(x.map((v, i) => v + (y[i] - v) * t)); };
+const rgba = (h, a) => `rgba(${rgbOf(h).join(",")},${a})`;
+function lum(h) {
+  const [r, g, b] = rgbOf(h).map(v => { v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; });
+  return .2126 * r + .7152 * g + .0722 * b;
+}
+function contrast(a, b) { const x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); }
+const isHex = v => /^#[0-9a-f]{6}$/i.test(v || "");
+
+/* Every shade the interface uses, worked out from four base colors. */
+function deriveTheme(base) {
+  const { bg, card, accent, text } = base, dark = lum(bg) < .3;
+  const T = (t) => mixC(card, text, t);
+  const side = mixC(bg, card, dark ? .45 : .6);
+  const v = {
+    "--bg": bg, "--side": side, "--card": card,
+    "--card2": dark ? T(.045) : mixC(card, bg, .8), "--soft": dark ? T(.075) : mixC(bg, text, .035), "--soft2": dark ? T(.12) : mixC(bg, text, .08),
+    "--line": T(dark ? .08 : .1), "--line2": T(dark ? .15 : .17),
+    "--ink": text, "--ink2": mixC(text, bg, .24), "--muted": mixC(text, bg, .48),
+    "--accent": accent, "--accent2": mixC(accent, "#ffffff", dark ? .22 : .14), "--accent-deep": mixC(accent, "#000000", .1),
+    "--accent-dim": mixC(card, accent, dark ? .16 : .12), "--accent-line": mixC(card, accent, dark ? .34 : .28),
+    "--accent-rgb": rgbOf(accent).join(","), "--on-accent": contrast(accent, "#ffffff") >= 3 ? "#ffffff" : "#111111",
+    "--chip-on-bg": text, "--chip-on-ink": dark ? bg : card,
+    "--log-bg": dark ? mixC(bg, "#000000", .15) : mixC(card, bg, .8), "--img1": dark ? T(.06) : card, "--img2": dark ? mixC(bg, card, .3) : mixC(bg, text, .05),
+    "--ph": T(dark ? .22 : .27), "--nav-hover": mixC(side, text, dark ? .045 : .04), "--switch-off": T(.2),
+    "--thumb": T(dark ? .13 : .18), "--thumb-h": T(dark ? .2 : .28),
+    "--overlay": dark ? rgba(mixC(bg, "#000000", .5), .62) : rgba(text, .35), "--shadow": dark ? "rgba(0,0,0,.45)" : rgba(text, .16),
+    "--rank-bg": rgba(dark ? bg : card, dark ? .78 : .88),
+  };
+  Object.assign(v, dark ? {
+    "--ok": "#4fd08a", "--ok-bg": "rgba(79,208,138,.12)", "--gap": "#a98bfa", "--gap-bg": "rgba(169,139,250,.13)",
+    "--warn": "#f2bb4a", "--warn-bg": "rgba(242,187,74,.12)", "--danger": "#f27878", "--danger-bg": "rgba(242,120,120,.12)",
+  } : {
+    "--ok": "#16a34a", "--ok-bg": "rgba(22,163,74,.1)", "--gap": "#7c5cdb", "--gap-bg": "rgba(124,92,219,.1)",
+    "--warn": "#b7791f", "--warn-bg": "rgba(183,121,31,.1)", "--danger": "#dc2626", "--danger-bg": "rgba(220,38,38,.08)",
+    "--s1": "#2a78d6", "--s2": "#eb6834", "--s3": "#1baf7a", "--s4": "#eda100", "--s5": "#e87ba4", "--s6": "#008300",
+  });
+  return { dark, vars: v };
+}
+const customThemes = () => S.state?.settings?.custom_themes || [];
+const customOf = key => String(key || "").startsWith("custom:") ? customThemes().find(t => "custom:" + t.id === key) : null;
+let appliedVars = [];
+function setThemeVars(vars, dark) {
+  const st = document.documentElement.style;
+  appliedVars.forEach(k => st.removeProperty(k));
+  appliedVars = vars ? Object.keys(vars) : [];
+  if (vars) { for (const [k, val] of Object.entries(vars)) st.setProperty(k, val); st.setProperty("color-scheme", dark ? "dark" : "light"); }
+  else st.removeProperty("color-scheme");
+}
 function applyTheme(key) {
+  const c = customOf(key);
+  if (c) {
+    const d = deriveTheme(c.base);           // re-derived, so older saved themes pick up improvements
+    document.documentElement.dataset.theme = "custom";
+    setThemeVars(d.vars, d.dark);
+    return;
+  }
   if (!THEMES.find(t => t.key === key)) key = "midnight";
+  setThemeVars(null);
   document.documentElement.dataset.theme = key;
+}
+function previewBase(key) {                      // base colors of any theme, for the editor
+  const c = customOf(key);
+  return { ...(c ? c.base : THEME_BASE[key] || THEME_BASE.midnight) };
+}
+
+/* ---- theme editor ---- */
+let teClose = null;                              // closes the theme editor if it's open
+const TE_FIELDS = [
+  ["bg", "Background", "Behind everything"],
+  ["card", "Cards", "Panels, cards and the sidebar"],
+  ["accent", "Accent", "Buttons, highlights and the active page"],
+  ["text", "Text", "Headings and body text"],
+];
+function themeEditor(existing) {
+  const before = S.state.settings.theme;
+  const startKey = existing ? "custom:" + existing.id : (before || "midnight");
+  const base = previewBase(startKey);
+  let name = existing ? existing.name : "";
+  const o = $("#overlay");
+  o.classList.add("te-open");
+  o.innerHTML = `<div class="te" role="dialog" aria-label="Theme editor">
+    <div class="te-h"><h3>${existing ? "Edit theme" : "Make your own theme"}</h3><p>Pick four colors. The app shows your theme live while you edit.</p></div>
+    <div class="te-b">
+      <div><label for="te-name">Name</label><div class="input"><input id="te-name" maxlength="40" placeholder="My theme" value="${esc(name)}"></div></div>
+      <div><label>Start from</label><div class="te-presets">${THEMES.map(t =>
+        `<button data-k="${t.key}" title="${esc(t.label)}" style="background:${THEME_BASE[t.key].bg}"><i style="background:${THEME_BASE[t.key].accent}"></i></button>`).join("")}</div></div>
+      <div>${TE_FIELDS.map(([k, l, d]) => `<div class="te-row" data-k="${k}"><label class="sw"><input type="color" value="${base[k]}" aria-label="${l}"></label>
+        <div class="tx"><b>${l}</b><small>${d}</small></div><input class="hex" value="${base[k]}" maxlength="7" spellcheck="false" aria-label="${l} hex code"></div>`).join("")}</div>
+      <div class="te-warn" id="te-warn"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:1px"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/></svg><span></span></div>
+    </div>
+    <div class="te-f"><button class="btn" id="te-cancel">Cancel</button><button class="btn primary" id="te-save">${existing ? "Save changes" : "Save theme"}</button></div></div>`;
+  o.classList.add("show");
+  const rows = [...o.querySelectorAll(".te-row")];
+  const paint = () => {
+    const d = deriveTheme(base);
+    document.documentElement.dataset.theme = "custom";
+    setThemeVars(d.vars, d.dark);
+    const warn = [];
+    if (contrast(base.text, base.bg) < 4.5 || contrast(base.text, base.card) < 4.5) warn.push("The text may be hard to read on this background.");
+    if (contrast(base.accent, base.card) < 2) warn.push("The accent color is close to the card color, so buttons won't stand out.");
+    const w = $("#te-warn"); w.classList.toggle("show", warn.length > 0); w.querySelector("span").textContent = warn.join(" ");
+  };
+  rows.forEach(r => {
+    const k = r.dataset.k, pick = r.querySelector("input[type=color]"), hex = r.querySelector(".hex");
+    pick.oninput = () => { base[k] = pick.value; hex.value = pick.value; hex.classList.remove("bad"); paint(); };
+    hex.oninput = () => {
+      let v = hex.value.trim().toLowerCase(); if (v && v[0] !== "#") v = "#" + v;
+      if (/^#[0-9a-f]{3}$/.test(v)) v = "#" + [...v.slice(1)].map(c => c + c).join("");
+      const ok = isHex(v); hex.classList.toggle("bad", !ok);
+      if (ok) { base[k] = v; pick.value = v; paint(); }
+    };
+    hex.onblur = () => { hex.value = base[k]; hex.classList.remove("bad"); };
+  });
+  o.querySelectorAll(".te-presets button").forEach(b => b.onclick = () => {
+    Object.assign(base, THEME_BASE[b.dataset.k]);
+    rows.forEach(r => { r.querySelector("input[type=color]").value = base[r.dataset.k]; r.querySelector(".hex").value = base[r.dataset.k]; });
+    paint();
+  });
+  const close = restore => {
+    teClose = null;
+    document.removeEventListener("keydown", key);
+    o.classList.remove("show", "te-open"); o.innerHTML = "";
+    if (restore) applyTheme(before);
+  };
+  const key = e => { if (e.key === "Escape") close(true); };
+  document.addEventListener("keydown", key);
+  teClose = close;
+  $("#te-cancel").onclick = () => close(true);
+  $("#te-save").onclick = async () => {
+    const d = deriveTheme(base);
+    const id = existing ? existing.id : Date.now().toString(36);
+    const nm = $("#te-name").value.trim() || (existing ? existing.name : `My theme ${customThemes().length + 1}`);
+    const r = await call("save_custom_theme", { id, name: nm, dark: d.dark, base: { ...base }, vars: d.vars });
+    if (!r || r.error) { toast(r?.error || "That theme couldn't be saved.", "err"); return; }
+    S.state.settings = r.settings;
+    const k = "custom:" + id;
+    await call("set_theme", k);
+    S.state.settings.theme = k;
+    close(false);
+    applyTheme(k);
+    if (S.page === "settings") renderSettings();
+    toast(existing ? `Saved “${nm}”.` : `“${nm}” is now your theme.`, "ok");
+  };
+  paint();
+  setTimeout(() => $("#te-name")?.focus(), 50);
+}
+async function deleteTheme(t) {
+  const a = await modal("Delete this theme?", `“${t.name}” will be removed. You can always make it again.`, [["Cancel", ""], ["Delete", "primary"]]);
+  if (a !== "Delete") return;
+  const st = await call("delete_custom_theme", t.id);
+  if (!st) return;
+  S.state.settings = st;
+  applyTheme(st.theme);
+  if (S.page === "settings") renderSettings();
+  toast("Theme deleted.");
 }
 
 /* ---------- startup screen ---------- */
@@ -1835,6 +2069,7 @@ async function boot() {
   $("#st-scan").onclick = () => { show("scan"); startScan(); };
   const st = await call("get_state");
   if (st) {
+    S.state = st;
     applyTheme(st.settings.theme);
     $("#sp-ver").textContent = "Version " + st.version;
   }

@@ -68,6 +68,15 @@ THEMES = {
     "daylight": ("#f4f5f8", "#ffffff", False),
     "blossom": ("#fdf4f8", "#fff8fb", False),
 }
+# Themes people make themselves are stored in the settings as "custom_themes" and picked as
+# "custom:<id>". The page works out every shade from four base colors and sends them along;
+# only plain color values are kept, so nothing else can end up in the page or loading window.
+CUSTOM_PREFIX = "custom:"
+MAX_CUSTOM_THEMES = 24
+_HEX = re.compile(r"#[0-9a-fA-F]{6}")
+_VAR_NAME = re.compile(r"--[a-z0-9-]{1,24}")
+_VAR_VALUE = re.compile(r"#[0-9a-fA-F]{6}|\d{1,3},\d{1,3},\d{1,3}"
+                        r"|rgba\(\d{1,3},\d{1,3},\d{1,3},(?:0|1|0?\.\d{1,3})\)")
 
 DATA_HOME = os.path.join(os.environ.get("LOCALAPPDATA") or os.path.expanduser("~"), "UGC Trend Finder")
 SETTINGS_PATH = os.path.join(os.path.expanduser("~"), ".ugc_trend_finder_settings.json")
@@ -90,6 +99,7 @@ DEFAULTS = {
     "last_version_seen": "",
     "tray_hint_shown": False,
     "update_attempt": {},
+    "custom_themes": [],
 }
 
 
@@ -139,6 +149,8 @@ def load_settings():
     except Exception:
         pass
     s["gap"] = max(2.0, float(s.get("gap", 3.0)))
+    s["custom_themes"] = [t for t in (clean_custom_theme(x) for x in (s.get("custom_themes") or [])
+                                      if isinstance(s.get("custom_themes"), list)) if t][:MAX_CUSTOM_THEMES]
     return s
 
 
@@ -171,11 +183,65 @@ def stamp_time(filename):
     return None
 
 
-def dark_titlebar(hwnd, theme="midnight"):
+def clean_custom_theme(t):
+    """A custom theme as sent by the page, keeping only valid names and colors (None if unusable)."""
+    if not isinstance(t, dict):
+        return None
+    tid = str(t.get("id") or "")
+    if not re.fullmatch(r"[a-z0-9]{1,24}", tid):
+        return None
+    base = t.get("base") if isinstance(t.get("base"), dict) else {}
+    base = {k: str(base.get(k)) for k in ("bg", "card", "accent", "text") if _HEX.fullmatch(str(base.get(k) or ""))}
+    raw = t.get("vars") if isinstance(t.get("vars"), dict) else {}
+    vars_ = {}
+    for k, v in list(raw.items())[:80]:
+        v = re.sub(r"\s+", "", str(v))
+        if _VAR_NAME.fullmatch(str(k)) and _VAR_VALUE.fullmatch(v):
+            vars_[k] = v
+    if len(base) < 4 or not {"--bg", "--side", "--accent"} <= set(vars_):
+        return None
+    name = re.sub(r"\s+", " ", str(t.get("name") or "")).strip()[:40] or "My theme"
+    return {"id": tid, "name": name, "dark": bool(t.get("dark")), "base": base, "vars": vars_}
+
+
+def find_custom_theme(settings, key):
+    if not str(key or "").startswith(CUSTOM_PREFIX):
+        return None
+    tid = key[len(CUSTOM_PREFIX):]
+    return next((t for t in settings.get("custom_themes") or [] if t["id"] == tid), None)
+
+
+def theme_colors(settings, key):
+    """(window background, title bar color, dark title bar?) for a built-in or custom theme."""
+    if key in THEMES:
+        return THEMES[key]
+    t = find_custom_theme(settings, key)
+    if t:
+        return t["vars"]["--bg"], t["vars"]["--side"], t["dark"]
+    return THEMES["midnight"]
+
+
+def theme_exists(settings, key):
+    return key in THEMES or find_custom_theme(settings, key) is not None
+
+
+def custom_style(t, splash=False):
+    """The theme's colors as an inline style for the page (or the loading window)."""
+    v = t["vars"]
+    if splash:
+        pick = {"--bg": "--bg", "--edge": "--line", "--ink": "--ink", "--muted": "--muted", "--track": "--soft",
+                "--a1": "--accent", "--a2": "--accent2", "--g1": "--accent2", "--g2": "--accent-deep",
+                "--glow": "--accent-rgb", "--on": "--on-accent"}
+        v = {k: t["vars"][src] for k, src in pick.items() if src in t["vars"]}
+    scheme = "dark" if t["dark"] else "light"
+    return ";".join(f"{k}:{val}" for k, val in v.items()) + f";color-scheme:{scheme}"
+
+
+def dark_titlebar(hwnd, colors):
     """Colors the Windows title bar to match the theme (Windows 10/11)."""
     if sys.platform != "win32" or not hwnd:
         return
-    _bg, caption, dark = THEMES.get(theme, THEMES["midnight"])
+    _bg, caption, dark = colors
     try:
         import ctypes
         on = ctypes.c_int(1 if dark else 0)
@@ -636,7 +702,8 @@ class Api:
         return True
 
     def save_settings(self, patch):
-        allowed = set(DEFAULTS) - {"update_attempt", "tray_hint_shown", "out_dir", "last_version_seen"}
+        allowed = set(DEFAULTS) - {"update_attempt", "tray_hint_shown", "out_dir", "last_version_seen",
+                                   "custom_themes", "theme"}
         for k, v in (patch or {}).items():
             if k in allowed:
                 self._app.settings[k] = v
@@ -706,12 +773,39 @@ class Api:
         return self._app.check_update(manual=True)
 
     def set_theme(self, name):
-        if name not in THEMES:
+        s = self._app.settings
+        if not theme_exists(s, name):
             return False
-        self._app.settings["theme"] = name
-        save_settings(self._app.settings)
-        dark_titlebar(self._app.hwnd, name)
+        s["theme"] = name
+        save_settings(s)
+        dark_titlebar(self._app.hwnd, theme_colors(s, name))
         return True
+
+    def save_custom_theme(self, theme):
+        """Adds a new custom theme or updates one with the same id."""
+        s = self._app.settings
+        t = clean_custom_theme(theme)
+        if not t:
+            return {"error": "That theme couldn't be saved."}
+        themes = [x for x in s.get("custom_themes") or [] if x["id"] != t["id"]]
+        if len(themes) >= MAX_CUSTOM_THEMES:
+            return {"error": f"You can keep up to {MAX_CUSTOM_THEMES} of your own themes. Delete one to make room."}
+        old = next((i for i, x in enumerate(s.get("custom_themes") or []) if x["id"] == t["id"]), None)
+        themes.insert(len(themes) if old is None else old, t)
+        s["custom_themes"] = themes
+        if s.get("theme") == CUSTOM_PREFIX + t["id"]:
+            dark_titlebar(self._app.hwnd, theme_colors(s, s["theme"]))
+        save_settings(s)
+        return {"ok": True, "settings": self._app.public_settings()}
+
+    def delete_custom_theme(self, tid):
+        s = self._app.settings
+        s["custom_themes"] = [x for x in s.get("custom_themes") or [] if x["id"] != tid]
+        if s.get("theme") == CUSTOM_PREFIX + str(tid):
+            s["theme"] = "midnight"
+            dark_titlebar(self._app.hwnd, theme_colors(s, "midnight"))
+        save_settings(s)
+        return self._app.public_settings()
 
     def release_notes(self, version):
         if not REPO:
@@ -754,7 +848,7 @@ class TrendApp:
         self.splash_hwnd = None
         self.revealed = False
         self.centered = False
-        if self.settings.get("theme") not in THEMES:
+        if not theme_exists(self.settings, self.settings.get("theme")):
             self.settings["theme"] = "midnight"
         # remember whether this start is the first one after an update
         seen = self.settings.get("last_version_seen") or ""
@@ -1307,7 +1401,7 @@ class TrendApp:
                 break
             time.sleep(0.05)
         self.hwnd = hwnd
-        dark_titlebar(hwnd, self.settings.get("theme", "midnight"))
+        dark_titlebar(hwnd, theme_colors(self.settings, self.settings.get("theme", "midnight")))
         if not self.hidden:
             self.centered = WinFx.center(hwnd)      # open in the middle of the screen you're using
         write_log(f"startup: app window hwnd={hwnd} rect={WinFx.rect(hwnd)}")
@@ -1327,20 +1421,26 @@ class TrendApp:
         with open(os.path.join(APP_DIR, "ui", "index.html"), encoding="utf-8") as f:
             page = f.read()
         theme = self.settings.get("theme", "midnight")
-        page = page.replace('<html lang="en">', f'<html lang="en" data-theme="{theme}" data-launch="managed">', 1)
+        custom = find_custom_theme(self.settings, theme)
+        win_bg = theme_colors(self.settings, theme)[0]
+
+        def themed(html_text, extra="", splash=False):
+            attrs = f'data-theme="custom" style="{custom_style(custom, splash)}"' if custom else f'data-theme="{theme}"'
+            return html_text.replace('<html lang="en">', f'<html lang="en" {attrs}{extra}>', 1)
+        page = themed(page, ' data-launch="managed"')
         # The app window loads hidden while a small loading window shows progress; when the
         # page is ready the loading window closes and the app fades in (see reveal()).
         self.window = webview.create_window(
             APP_NAME, html=page, js_api=Api(self),
-            width=1280, height=840, min_size=(960, 640), background_color=THEMES[theme][0], text_select=False,
+            width=1280, height=840, min_size=(960, 640), background_color=win_bg, text_select=False,
             hidden=True)
         self.window.events.closing += self.on_closing
         if not start_hidden:
             with open(os.path.join(APP_DIR, "ui", "splash.html"), encoding="utf-8") as f:
-                sp = f.read().replace('<html lang="en">', f'<html lang="en" data-theme="{theme}">', 1)
+                sp = themed(f.read(), splash=True)
             self.splash = webview.create_window(
                 SPLASH_TITLE, html=sp, width=520, height=320, resizable=False, frameless=True,
-                on_top=True, background_color=THEMES[theme][0], text_select=False, hidden=True)
+                on_top=True, background_color=win_bg, text_select=False, hidden=True)
             self.splash.events.loaded += self._splash_loaded
         webview.start(self.on_started, debug=False, private_mode=False,
                       storage_path=os.path.join(DATA_HOME, "webview"))

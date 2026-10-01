@@ -555,6 +555,21 @@ textarea { user-select: text; }
 .mo-tipbar b { color: var(--ink); }
 .mo-tipbar .btn { margin-left: auto; }
 
+/* ---------- smooth presses ---------- */
+:root { --ease: cubic-bezier(.22,.8,.24,1); }
+.btn, .chip, .nav button, .seg button, .mo-leg, .mo-play, .upd-pill, .theme, .item, .ex, .mo-row, .dd-menu button, .toggle .sw {
+  transition: background-color .22s var(--ease), border-color .22s var(--ease), color .22s var(--ease),
+    box-shadow .28s var(--ease), transform .26s var(--ease), opacity .2s var(--ease); }
+.btn:active:not(:disabled), .chip:active:not(:disabled), .seg button:active, .mo-leg:active, .mo-play:active, .upd-pill:active {
+  transform: scale(.96); transition-duration: .12s; }
+.btn.primary:active:not(:disabled) { box-shadow: 0 2px 8px rgba(var(--accent-rgb), .2); }
+.nav button:active, .mo-row:active, .ex:active, .dd-menu button:active { transform: scale(.985); transition-duration: .12s; }
+.theme:active { transform: scale(.97); transition-duration: .12s; }
+.toggle:active .sw { transform: scale(.94); transition-duration: .12s; }
+.ideas, .sv-grid, .type-bar, #tb, .mo-list { animation: fade .24s var(--ease) both; }
+/* cards far below the visible area aren't drawn until you scroll to them (saves memory) */
+.idea, .sv { content-visibility: auto; contain-intrinsic-size: auto 460px; }
+
 @media (max-width: 1180px) {
   .stats4, .stats-row { grid-template-columns: repeat(2, minmax(0,1fr)); }
 }
@@ -746,6 +761,12 @@ function lightbox(item) {
 const THUMBS = {};
 const thumbQueue = new Map();
 let thumbTimer = null;
+const THUMBS_MAX = 300;
+function rememberThumb(id, uri) {
+  delete THUMBS[id]; THUMBS[id] = uri;                 // newest last
+  const keys = Object.keys(THUMBS);
+  for (let i = 0; i < keys.length - THUMBS_MAX; i++) delete THUMBS[keys[i]];
+}
 function itemId(it) {
   if (!it) return "";
   if (it.id) return String(it.id);
@@ -754,12 +775,12 @@ function itemId(it) {
 }
 function imgBox(url, cls = "", id = "") {
   const src = url || (id && THUMBS[id]) || "";
-  return `<div class="img ${cls}" data-id="${esc(id)}">${src ? `<img src="${esc(src)}" alt="" referrerpolicy="no-referrer">` : ""}<div class="ph">${ICON.img}</div></div>`;
+  return `<div class="img ${cls}" data-id="${esc(id)}">${src ? `<img src="${esc(src)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : ""}<div class="ph">${ICON.img}</div></div>`;
 }
 function setPicture(box, uri) {
   box.querySelector("img")?.remove();
   const im = document.createElement("img");
-  im.alt = ""; im.dataset.w = 1; im.dataset.local = 1;
+  im.alt = ""; im.dataset.w = 1; im.dataset.local = 1; im.decoding = "async";
   im.onload = () => im.classList.add("loaded");
   im.src = uri;
   box.prepend(im);
@@ -782,7 +803,7 @@ async function flushThumbs() {
     const got = await call("thumbs", part.map(([id]) => id)) || {};
     for (const [id, boxes] of part) {
       if (!got[id]) continue;
-      THUMBS[id] = got[id];
+      rememberThumb(id, got[id]);
       boxes.forEach(b => { if (b.isConnected) setPicture(b, got[id]); });
     }
   }
@@ -805,8 +826,9 @@ function chips(id, options, value, disabled = false) {
 function wireChips(id, cb) {
   const el = document.getElementById(id);
   el.querySelectorAll(".chip").forEach(b => b.onclick = () => {
+    if (b.classList.contains("on") && el.querySelectorAll(".chip.on").length === 1) return;
     el.querySelectorAll(".chip").forEach(x => x.classList.toggle("on", x === b));
-    cb(b.dataset.v);
+    setTimeout(() => cb(b.dataset.v), 110);
   });
 }
 function toggle(id, label, sub, on) {
@@ -842,7 +864,11 @@ function show(page) {
   $("#h-sub").textContent = p[2];
   $("#h-actions").innerHTML = "";
   document.querySelectorAll(".nav button").forEach(b => b.classList.toggle("active", b.dataset.p === page));
-  document.querySelectorAll(".page").forEach(s => { s.classList.remove("active"); s.style.display = ""; });
+  if (S.page !== "momentum" && typeof momStop === "function") momStop();
+  document.querySelectorAll(".page").forEach(s => {
+    s.classList.remove("active"); s.style.display = "";
+    if (s.id !== "p-" + page && s.id !== "p-loading" && s.innerHTML) s.innerHTML = "";
+  });
   const el = document.getElementById("p-" + page);
   el.classList.add("active");
   ({ scan: renderScan, ideas: renderIdeas, saved: renderSaved, trends: renderTrends, momentum: renderMomentum, history: renderHistory, settings: renderSettings, help: renderHelp })[page]();
@@ -962,6 +988,7 @@ function renderScan() {
   $("#b-start").onclick = () => startScan();
   $("#b-cancel").onclick = () => { call("cancel_scan"); $("#pr-state").textContent = "Stopping…"; $("#b-cancel").disabled = true; };
   $("#pr-log").textContent = r.logs.join("\n");
+  S.logAdded = r.logs.length;
   updateEstimate();
   paintProgress();
   if (r.result) showResult(r.result);
@@ -1037,7 +1064,12 @@ function addLog(msg) {
   S.run.logs.push(msg);
   if (S.run.logs.length > 400) S.run.logs.shift();
   const el = $("#pr-log");
-  if (el) { el.textContent += (el.textContent ? "\n" : "") + msg; el.scrollTop = el.scrollHeight; }
+  if (el) {
+    S.logAdded = (S.logAdded || 0) + 1;
+    if (S.logAdded > 450) { el.textContent = S.run.logs.join("\n"); S.logAdded = S.run.logs.length; }
+    else el.textContent += (el.textContent ? "\n" : "") + msg;
+    el.scrollTop = el.scrollHeight;
+  }
 }
 
 /* ---------- events from python ---------- */

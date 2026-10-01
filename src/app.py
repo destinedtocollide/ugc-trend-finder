@@ -5,6 +5,7 @@ A native window (Edge WebView2 via pywebview) showing the interface in ui/index.
 a system-tray icon, automatic scans and automatic updates.
 """
 
+import gc
 import glob
 import json
 import os
@@ -18,6 +19,7 @@ import traceback
 import webbrowser
 import base64
 import io
+from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from urllib.parse import urlencode
@@ -376,7 +378,33 @@ def signal_running_instance():
 # ---------------------------------------------------------------- item pictures
 # Pictures are fetched here (not by the page) and kept on disk, so they also show for
 # older scans that never stored them, and keep working after Roblox's links expire.
-_THUMB_MEM = {}
+_THUMB_MEM = OrderedDict()       # small recent-pictures cache; the page keeps its own copy
+_THUMB_MEM_MAX = 120
+_THUMB_DISK_MAX = 800             # pictures kept on disk; older ones are removed at startup
+
+
+def _thumb_remember(aid, uri):
+    _THUMB_MEM[aid] = uri
+    _THUMB_MEM.move_to_end(aid)
+    while len(_THUMB_MEM) > _THUMB_MEM_MAX:
+        _THUMB_MEM.popitem(last=False)
+    return uri
+
+
+def prune_thumb_dir():
+    """Keeps the picture folder from growing forever: only the newest pictures stay."""
+    try:
+        files = [os.path.join(THUMB_DIR, f) for f in os.listdir(THUMB_DIR) if f.endswith(".img")]
+        if len(files) <= _THUMB_DISK_MAX:
+            return
+        files.sort(key=os.path.getmtime, reverse=True)
+        for p in files[_THUMB_DISK_MAX:]:
+            try:
+                os.remove(p)
+            except OSError:
+                pass
+    except OSError:
+        pass
 _THUMB_LOCK = threading.Lock()
 
 
@@ -412,13 +440,14 @@ def load_thumbs(ids):
     os.makedirs(THUMB_DIR, exist_ok=True)
     for i in clean:
         if i in _THUMB_MEM:
+            _THUMB_MEM.move_to_end(i)
             out[i] = _THUMB_MEM[i]
             continue
         path = os.path.join(THUMB_DIR, i + ".img")
         try:
             if os.path.getsize(path) > 0:
                 with open(path, "rb") as f:
-                    out[i] = _THUMB_MEM[i] = _to_data_uri(f.read())
+                    out[i] = _thumb_remember(i, _to_data_uri(f.read()))
                 continue
         except OSError:
             pass
@@ -447,7 +476,7 @@ def load_thumbs(ids):
         for aid, uri in pool.map(grab, urls.items()):
             if uri:
                 with _THUMB_LOCK:
-                    _THUMB_MEM[aid] = uri
+                    _thumb_remember(aid, uri)
                 out[aid] = uri
     return out
 
@@ -528,6 +557,8 @@ class Api:
         except Exception:
             write_log(traceback.format_exc())
             return {"points": [], "themes": [], "items": [], "error": True}
+        finally:
+            gc.collect()                            # the scan files read for the chart can be large
 
     def boot_progress(self, pct, text=""):
         self._app.splash_progress(pct, text)
@@ -827,6 +858,7 @@ class TrendApp:
             self.emit({"type": "scan_error", "msg": f"Something went wrong: {e}. Details were saved to {LOG_PATH}"})
         finally:
             self.run = None
+            gc.collect()                            # give back the memory the scan used
 
     def cancel_scan(self):
         if self.cancel_ev:
@@ -942,9 +974,28 @@ class TrendApp:
             self.window.hide()
         except Exception:
             pass
+        self.webview_memory(low=True)
+        gc.collect()
+
+    def webview_memory(self, low):
+        """While the app sits in the tray, ask the browser engine to use as little memory as
+        it can; back to normal as soon as the window is shown again."""
+        try:
+            from System import Func, Type
+            from Microsoft.Web.WebView2.Core import CoreWebView2MemoryUsageTargetLevel as Level
+            form = self.window.native
+
+            def apply():
+                core_wv = form.webview.CoreWebView2
+                if core_wv is not None:
+                    core_wv.MemoryUsageTargetLevel = Level.Low if low else Level.Normal
+            form.Invoke(Func[Type](apply))
+        except Exception as e:
+            write_log(f"memory level change skipped: {e}")
 
     def show_window(self):
         self.hidden = False
+        self.webview_memory(low=False)
         try:
             self.window.show()
             self.window.restore()
@@ -1063,6 +1114,7 @@ class TrendApp:
         main = getattr(self, "hwnd", None)
         if self.hidden:                             # started in the tray: nothing to animate
             self.emit_raw({"type": "reveal"})
+            self.webview_memory(low=True)
         elif sp is not None and self._grow_into_app(sp, sp_hwnd, main):
             pass
         else:
@@ -1170,6 +1222,7 @@ class TrendApp:
 
     def on_started(self):
         """Runs once the window exists."""
+        threading.Thread(target=prune_thumb_dir, daemon=True).start()
         hwnd = None
         for _ in range(40):                         # the window may take a moment to exist
             hwnd = _hwnd_of(self.window, APP_NAME)

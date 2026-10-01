@@ -1055,7 +1055,8 @@ def _snapshot_signals(path, include_roblox=False):
                      "url": item_link(r)}
     out = {"t": snap.get("created"), "cats": sorted(snap.get("categories") or []),
            "themes": themes, "items": items, "info": info}
-    _SNAP_CACHE.clear() if len(_SNAP_CACHE) > 400 else None
+    while len(_SNAP_CACHE) >= 100:                  # one entry per scan file; drop the oldest
+        _SNAP_CACHE.pop(next(iter(_SNAP_CACHE)))
     _SNAP_CACHE[key] = out
     return out
 

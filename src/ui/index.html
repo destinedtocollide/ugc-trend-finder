@@ -996,6 +996,7 @@ function renderScan() {
 async function saveScanOpt(patch) {
   const st = await call("save_settings", patch);
   if (st) S.state.settings = st;
+  if ("include_roblox" in patch) MOM.data = null;     // the momentum charts depend on it
   updateEstimate();
 }
 function updateEstimate() {
@@ -1095,7 +1096,11 @@ function onEvent(ev) {
       Object.assign(r, { running: false, finished: Date.now(), done: r.total, waitUntil: 0,
         result: { ok: true, text: `Done in ${fmtDur((Date.now() - r.startTs) / 1000)}. ${ev.n_ideas} ideas are ready.` } });
       S.currentId = ev.id; S.current = null; MOM.data = null;
-      refreshState().then(() => { if (ev.go && S.page === "scan") show("ideas"); else if (S.page === "scan") renderScan(); else show(S.page); });
+      refreshState().then(() => {
+        if (ev.go && S.page === "scan") show("ideas");
+        else if (S.page === "scan") renderScan();
+        else if (["ideas", "trends", "momentum", "history"].includes(S.page)) show(S.page);
+      });
       toast(`Scan finished: ${ev.n_ideas} new ideas.`, "ok"); break;
     case "scan_cancelled":
       Object.assign(r, { running: false, finished: 0, result: { ok: false, text: "Scan cancelled." } });
@@ -1252,13 +1257,16 @@ function renderSaved() {
   el.querySelectorAll(".sv").forEach(card => {
     const key = card.dataset.k, x = items.find(i => i.key === key);
     card.querySelector(".img").onclick = () => x.examples?.[0] ? lightbox({ ...x.examples[0], thumb: x.image || x.examples[0].thumb }) : null;
-    card.querySelectorAll(".seg button").forEach(b => b.onclick = async () => {
-      S.saved = await call("update_saved", key, { status: b.dataset.s }) || S.saved;
-      updateStatus(); renderSaved();
-    });
     let t = null;
     const ta = card.querySelector("textarea");
-    ta.oninput = () => { clearTimeout(t); t = setTimeout(async () => { S.saved = await call("update_saved", key, { notes: ta.value }) || S.saved; }, 500); };
+    ta.oninput = () => { clearTimeout(t); t = setTimeout(async () => { t = null; S.saved = await call("update_saved", key, { notes: ta.value }) || S.saved; }, 500); };
+    card.querySelectorAll(".seg button").forEach(b => b.onclick = async () => {
+      if (b.classList.contains("on")) return;
+      const patch = { status: b.dataset.s };
+      if (t) { clearTimeout(t); t = null; patch.notes = ta.value; }   // keep notes typed just before
+      S.saved = await call("update_saved", key, patch) || S.saved;
+      updateStatus(); renderSaved();
+    });
     card.querySelector(".b-search").onclick = () => call("open_url", "https://www.roblox.com/catalog?Keyword=" + encodeURIComponent(x.theme));
     card.querySelector(".b-rm").onclick = async () => {
       const a = await modal("Remove this idea?", `“${title(x.theme)} · ${x.type}” and its notes will be removed from your list.`, [["Cancel", ""], ["Remove", "primary"]]);
@@ -1539,12 +1547,13 @@ function momChart() {
   // end labels (direct labels) for up to 4 lines, nudged apart so they never overlap
   if (labels) {
     const ls = sel.map(s => ({ s, yy: y(s.v[b]) })).sort((p, q) => p.yy - q.yy);
-    for (let j = 1; j < ls.length; j++) if (ls[j].yy - ls[j - 1].yy < 15) ls[j].yy = ls[j - 1].yy + 15;
+    for (let j = 1; j < ls.length; j++) if (ls[j].yy - ls[j - 1].yy < 16) ls[j].yy = ls[j - 1].yy + 16;
     const over = ls.length ? ls[ls.length - 1].yy - (H - P.b) : 0;
     if (over > 0) ls.forEach(l => l.yy -= over);
     ls.forEach(({ s, yy }) => {
       const nm = k === "themes" ? title(s.name) : s.name;
-      g += `<text class="dl" x="${W - P.r + 10}" y="${yy + 4}">${esc(nm.length > 18 ? nm.slice(0, 17) + "…" : nm)}</text>`;
+      g += `<circle cx="${W - P.r + 12}" cy="${yy}" r="3.5" fill="${momColor(k, s.key)}"/>` +   // color key, so stacked labels don't read as one name
+        `<text class="dl" x="${W - P.r + 20}" y="${yy + 4}">${esc(nm.length > 17 ? nm.slice(0, 16) + "…" : nm)}</text>`;
     });
   }
   g += `<line class="cur" x1="${cx}" x2="${cx}" y1="${P.t - 4}" y2="${H - P.b}"/>`;
@@ -1619,7 +1628,11 @@ function momTable() {
   for (let i = b; i >= a; i--) rows += `<tr${i === MOM.idx ? ` style="background:var(--soft)"` : ""}><td>${esc(momFmtDate(i, true))}</td>${sel.map(s => `<td class="c">${momPct(s.v[i])}</td>`).join("")}</tr>`;
   el.innerHTML = `<table><thead><tr><th>Scan</th>${sel.map(s => `<th class="c">${esc(k === "themes" ? title(s.name) : s.name)}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table>`;
 }
-window.addEventListener("resize", () => { if (S.page === "momentum" && MOM.data) momChart(); });
+let momResizeFrame = 0;
+window.addEventListener("resize", () => {
+  if (momResizeFrame || S.page !== "momentum" || !MOM.data) return;
+  momResizeFrame = requestAnimationFrame(() => { momResizeFrame = 0; if (S.page === "momentum") momChart(); });
+});
 
 /* ---------- history ---------- */
 function renderHistory() {
@@ -1767,8 +1780,9 @@ document.addEventListener("keydown", e => {
   else if (/^[1-6]$/.test(k)) { e.preventDefault(); show(PAGES[+k - 1][0]); }
 });
 document.addEventListener("contextmenu", e => { if (!e.target.closest(".selectable, pre, input, textarea")) e.preventDefault(); });
-setInterval(() => { if (S.run.running) paintProgress(); }, 500);
-setInterval(updateStatus, 5000);
+setInterval(() => { if (S.run.running && !document.hidden && S.page === "scan") paintProgress(); }, 500);
+setInterval(() => { if (!document.hidden) updateStatus(); }, 5000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) updateStatus(); });
 
 /* ---------- themes ---------- */
 const THEMES = [

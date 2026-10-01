@@ -988,6 +988,8 @@ def summarize(result, records, meta, report_path, thumbs=None):
 
 
 _SNAP_CACHE = {}
+_SNAP_CACHE_MAX = 200     # more than the momentum page ever reads, so revisits never re-read files
+_SNAP_ITEMS = 250         # items kept per scan for the item charts
 
 
 def _snapshot_signals(path, include_roblox=False):
@@ -1045,17 +1047,22 @@ def _snapshot_signals(path, include_roblox=False):
             ok = (t in qualified) if qualified else (len(t_items[t]) >= 3 and len(t_creators[t]) >= 2)
             if ok:
                 themes[t] = {"v": round(100 * w / total, 3), "m": mom(t_day[t], t_week[t]), "n": len(t_items[t])}
-    items = {iid: {"v": round(100 * w / total, 3), "m": mom(i_day[iid], i_week[iid])}
-             for iid, w in i_w.items()} if total else {}
+    # Only the items with a real share of sales are kept: the charts show the top 40, and
+    # the long tail (shares of a few thousandths of a percent) would only take up memory.
+    keep = sorted(i_w, key=i_w.get, reverse=True)[:_SNAP_ITEMS] if total else []
+    items = {iid: {"v": round(100 * i_w[iid] / total, 3), "m": mom(i_day[iid], i_week[iid])} for iid in keep}
     info = {}
-    for iid in items:
+    for iid in keep:
         r = records[iid]
         info[iid] = {"name": r.get("name", ""), "type": TYPE_INFO.get(r.get("type"), {}).get("label", ""),
                      "price": fmt_price(r.get("price")), "creator": r.get("creator"), "favs": r.get("favs") or 0,
                      "url": item_link(r)}
     out = {"t": snap.get("created"), "cats": sorted(snap.get("categories") or []),
            "themes": themes, "items": items, "info": info}
-    while len(_SNAP_CACHE) >= 100:                  # one entry per scan file; drop the oldest
+    del snap, records
+    for old in [k for k in _SNAP_CACHE if k[0] == path]:     # an older copy of this same file
+        _SNAP_CACHE.pop(old, None)
+    while len(_SNAP_CACHE) >= _SNAP_CACHE_MAX:      # one entry per scan file; drop the oldest
         _SNAP_CACHE.pop(next(iter(_SNAP_CACHE)))
     _SNAP_CACHE[key] = out
     return out

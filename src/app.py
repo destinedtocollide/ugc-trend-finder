@@ -94,6 +94,24 @@ DEFAULTS = {
 
 
 # ---------------------------------------------------------------- basics
+_LOG_MAX = 512 * 1024
+
+
+def trim_log():
+    """Keeps app.log small: when it gets big, only the newest half is kept."""
+    try:
+        if os.path.getsize(LOG_PATH) <= _LOG_MAX:
+            return
+        with open(LOG_PATH, "rb") as f:
+            f.seek(-_LOG_MAX // 2, os.SEEK_END)
+            tail = f.read()
+        tail = tail[tail.find(b"\n") + 1:]
+        with open(LOG_PATH, "wb") as f:
+            f.write(tail)
+    except OSError:
+        pass
+
+
 def write_log(text):
     try:
         os.makedirs(DATA_HOME, exist_ok=True)
@@ -384,11 +402,20 @@ _THUMB_DISK_MAX = 800             # pictures kept on disk; older ones are remove
 
 
 def _thumb_remember(aid, uri):
-    _THUMB_MEM[aid] = uri
-    _THUMB_MEM.move_to_end(aid)
-    while len(_THUMB_MEM) > _THUMB_MEM_MAX:
-        _THUMB_MEM.popitem(last=False)
+    with _THUMB_LOCK:
+        _THUMB_MEM[aid] = uri
+        _THUMB_MEM.move_to_end(aid)
+        while len(_THUMB_MEM) > _THUMB_MEM_MAX:
+            _THUMB_MEM.popitem(last=False)
     return uri
+
+
+def _thumb_recall(aid):
+    with _THUMB_LOCK:
+        uri = _THUMB_MEM.get(aid)
+        if uri is not None:
+            _THUMB_MEM.move_to_end(aid)
+        return uri
 
 
 def prune_thumb_dir():
@@ -405,7 +432,10 @@ def prune_thumb_dir():
                 pass
     except OSError:
         pass
+
+
 _THUMB_LOCK = threading.Lock()
+_THUMB_SMALL = 60_000             # cached files above this size are old full-size pictures
 
 
 def _http(url, timeout=20):
@@ -414,18 +444,39 @@ def _http(url, timeout=20):
         return r.read()
 
 
-def _to_data_uri(raw):
-    """Shrinks the picture (smaller transfer to the page) and returns it as a data URI."""
+def _shrink(raw):
+    """Small WebP copy of a picture (what's kept on disk and sent to the page)."""
     try:
         from PIL import Image
-        im = Image.open(io.BytesIO(raw))
-        im.thumbnail((320, 320))
-        buf = io.BytesIO()
-        im.save(buf, "WEBP", quality=86, method=4)
-        return "data:image/webp;base64," + base64.b64encode(buf.getvalue()).decode()
+        with Image.open(io.BytesIO(raw)) as im:
+            im.thumbnail((320, 320))
+            buf = io.BytesIO()
+            im.save(buf, "WEBP", quality=86, method=4)
+            return buf.getvalue()
     except Exception:
-        kind = "png" if raw[:4] == b"\x89PNG" else ("webp" if raw[8:12] == b"WEBP" else "jpeg")
-        return f"data:image/{kind};base64," + base64.b64encode(raw).decode()
+        return raw
+
+
+def _to_data_uri(raw):
+    kind = "png" if raw[:4] == b"\x89PNG" else ("webp" if raw[8:12] == b"WEBP" else "jpeg")
+    return f"data:image/{kind};base64," + base64.b64encode(raw).decode()
+
+
+def _read_cached_thumb(path):
+    """Reads a cached picture. Pictures saved by older versions were full size; those are
+    shrunk once and saved again, so later reads skip the image work entirely."""
+    with open(path, "rb") as f:
+        raw = f.read()
+    if raw[8:12] == b"WEBP" and len(raw) <= _THUMB_SMALL:
+        return raw
+    small = _shrink(raw)
+    if small is not raw:
+        try:
+            with open(path, "wb") as f:
+                f.write(small)
+        except OSError:
+            pass
+    return small
 
 
 def load_thumbs(ids):
@@ -439,15 +490,14 @@ def load_thumbs(ids):
     out, need = {}, []
     os.makedirs(THUMB_DIR, exist_ok=True)
     for i in clean:
-        if i in _THUMB_MEM:
-            _THUMB_MEM.move_to_end(i)
-            out[i] = _THUMB_MEM[i]
+        hit = _thumb_recall(i)
+        if hit is not None:
+            out[i] = hit
             continue
         path = os.path.join(THUMB_DIR, i + ".img")
         try:
             if os.path.getsize(path) > 0:
-                with open(path, "rb") as f:
-                    out[i] = _thumb_remember(i, _to_data_uri(f.read()))
+                out[i] = _thumb_remember(i, _to_data_uri(_read_cached_thumb(path)))
                 continue
         except OSError:
             pass
@@ -466,18 +516,18 @@ def load_thumbs(ids):
     def grab(item):
         aid, url = item
         try:
-            raw = _http(url)
+            small = _shrink(_http(url))
             with open(os.path.join(THUMB_DIR, aid + ".img"), "wb") as f:
-                f.write(raw)
-            return aid, _to_data_uri(raw)
+                f.write(small)
+            return aid, _to_data_uri(small)
         except Exception:
             return aid, None
-    with ThreadPoolExecutor(max_workers=6) as pool:
+    if not urls:
+        return out
+    with ThreadPoolExecutor(max_workers=min(6, len(urls))) as pool:
         for aid, uri in pool.map(grab, urls.items()):
             if uri:
-                with _THUMB_LOCK:
-                    _thumb_remember(aid, uri)
-                out[aid] = uri
+                out[aid] = _thumb_remember(aid, uri)
     return out
 
 
@@ -701,7 +751,9 @@ class TrendApp:
         self.lock = threading.Lock()
         self.hwnd = None
         self.splash = None
+        self.splash_hwnd = None
         self.revealed = False
+        self.centered = False
         if self.settings.get("theme") not in THEMES:
             self.settings["theme"] = "midnight"
         # remember whether this start is the first one after an update
@@ -753,9 +805,25 @@ class TrendApp:
     def reports_dir(self):
         return os.path.join(self.settings["out_dir"], "reports")
 
+    _hist_cache = {}                                # report path -> (modified time, history row)
+
+    def _report_files(self):
+        return glob.glob(os.path.join(self.reports_dir(), "ugc_trends_*.json"))
+
     def history(self):
-        items = []
-        for jp in glob.glob(os.path.join(self.reports_dir(), "ugc_trends_*.json")):
+        """One row per saved scan. Each report is only read once (until it changes), so
+        refreshing the list doesn't re-read every scan from disk."""
+        items, cache, seen = [], TrendApp._hist_cache, set()
+        for jp in self._report_files():
+            try:
+                mt = os.path.getmtime(jp)
+            except OSError:
+                continue
+            seen.add(jp)
+            hit = cache.get(jp)
+            if hit and hit[0] == mt:
+                items.append(dict(hit[1]))
+                continue
             try:
                 with open(jp, encoding="utf-8") as f:
                     d = json.load(f)
@@ -763,22 +831,29 @@ class TrendApp:
                 continue
             dt = stamp_time(os.path.basename(jp))
             ideas = d.get("ideas") or []
-            items.append({
+            row = {
                 "id": jp, "iso": dt.isoformat() if dt else None,
                 "label": dt.strftime("%a %d %b, %H:%M") if dt else d.get("when", "?"),
                 "label_long": dt.strftime("%a %d %b %Y, %H:%M") if dt else d.get("when", "?"),
                 "scope": d.get("scope", ""), "n_items": d.get("n_items", 0),
                 "top": f"{ideas[0]['theme'].title()} · {ideas[0]['type']}" if ideas else "—",
-                "_sort": os.path.basename(jp),
-            })
-        items.sort(key=lambda h: h["_sort"], reverse=True)
-        for h in items:
-            h.pop("_sort")
+            }
+            del d
+            cache[jp] = (mt, row)
+            items.append(dict(row))
+        for gone in set(cache) - seen:
+            cache.pop(gone, None)
+        items.sort(key=lambda h: os.path.basename(h["id"]), reverse=True)
         return items
 
     def last_scan(self):
-        h = self.history()
-        return datetime.fromisoformat(h[0]["iso"]) if h and h[0]["iso"] else None
+        """Time of the newest scan, from the file names alone (no files are opened)."""
+        names = sorted(os.path.basename(p) for p in self._report_files())
+        for name in reversed(names):
+            dt = stamp_time(name)
+            if dt:
+                return dt
+        return None
 
     def state(self):
         hist = self.history()
@@ -996,6 +1071,8 @@ class TrendApp:
     def show_window(self):
         self.hidden = False
         self.webview_memory(low=False)
+        if not self.centered and self.hwnd:         # started in the tray: first time it's opened
+            self.centered = WinFx.center(self.hwnd)
         try:
             self.window.show()
             self.window.restore()
@@ -1232,7 +1309,7 @@ class TrendApp:
         self.hwnd = hwnd
         dark_titlebar(hwnd, self.settings.get("theme", "midnight"))
         if not self.hidden:
-            WinFx.center(hwnd)                      # open in the middle of the screen you're using
+            self.centered = WinFx.center(hwnd)      # open in the middle of the screen you're using
         write_log(f"startup: app window hwnd={hwnd} rect={WinFx.rect(hwnd)}")
         if self.splash is None:
             close_native_splash()
@@ -1276,6 +1353,7 @@ def main():
         close_native_splash()
         return
     os.makedirs(DATA_HOME, exist_ok=True)
+    trim_log()
     TrendApp().run_app()
     os._exit(0)
 

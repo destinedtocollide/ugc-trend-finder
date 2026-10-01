@@ -82,19 +82,48 @@ def check(repo, current):
 
 
 def download(url, dest, on_progress=None):
+    """Downloads to a temporary name first, so a broken-off download is never mistaken
+    for a complete file (a cut-off installer would fail to run)."""
+    part = dest + ".part"
     req = Request(url, headers={"User-Agent": UA})
-    with urlopen(req, timeout=60) as r, open(dest, "wb") as f:
-        total = int(r.headers.get("Content-Length") or 0)
-        got = 0
-        while True:
-            chunk = r.read(256 * 1024)
-            if not chunk:
-                break
-            f.write(chunk)
-            got += len(chunk)
-            if on_progress:
-                on_progress(got, total)
+    try:
+        with urlopen(req, timeout=60) as r, open(part, "wb") as f:
+            total = int(r.headers.get("Content-Length") or 0)
+            got = 0
+            while True:
+                chunk = r.read(256 * 1024)
+                if not chunk:
+                    break
+                f.write(chunk)
+                got += len(chunk)
+                if on_progress:
+                    on_progress(got, total)
+        if total and got != total:
+            raise RuntimeError("The download was cut off. Check your internet connection and try again.")
+        os.replace(part, dest)
+    finally:
+        try:
+            os.remove(part)
+        except OSError:
+            pass
     return dest
+
+
+def _remove_old_installers(keep):
+    """Setup files from earlier updates are ~16 MB each; they're not needed once installed."""
+    tmp = tempfile.gettempdir()
+    try:
+        names = os.listdir(tmp)
+    except OSError:
+        return
+    for name in names:
+        if name.startswith("UGC-Trend-Finder-Setup-") and name.endswith((".exe", ".part")):
+            path = os.path.join(tmp, name)
+            if os.path.abspath(path) != os.path.abspath(keep):
+                try:
+                    os.remove(path)
+                except OSError:
+                    pass
 
 
 def apply_installer(info, on_progress=None):
@@ -103,6 +132,7 @@ def apply_installer(info, on_progress=None):
     if not info.get("installer_url"):
         raise RuntimeError("This release doesn't have an installer yet. It's probably still being built; try again in a few minutes.")
     tmp = os.path.join(tempfile.gettempdir(), f"UGC-Trend-Finder-Setup-{info['version']}.exe")
+    _remove_old_installers(tmp)
     download(info["installer_url"], tmp, on_progress)
     flags = 0x00000008 | 0x00000200  # DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP
     subprocess.Popen([tmp, "/SILENT", "/SUPPRESSMSGBOXES", "/NORESTART",

@@ -251,10 +251,40 @@ def icon_colors(settings, key):
     return v.get("--accent2", v["--accent"]), v.get("--accent-deep", v["--accent"]), v.get("--on-accent", "#ffffff")
 
 
+# Finds this app's shortcuts (Start menu, desktop, taskbar pins, startup) and points their icon
+# at the given file. Only shortcuts that open this app's own .exe are touched. Prints the
+# shortcuts it changed, so Windows can be told to redraw them.
+_SHORTCUT_PS = r"""
+$exe = [IO.Path]::GetFullPath($env:UTF_EXE); $ico = $env:UTF_ICON
+$sh = New-Object -ComObject WScript.Shell
+$pins = Join-Path $env:APPDATA 'Microsoft\Internet Explorer\Quick Launch\User Pinned'
+$places = @(
+  @([Environment]::GetFolderPath('Programs'), $true),
+  @([Environment]::GetFolderPath('Desktop'), $false),
+  @([Environment]::GetFolderPath('Startup'), $false),
+  @((Join-Path $pins 'TaskBar'), $true),
+  @((Join-Path $pins 'StartMenu'), $true))
+foreach ($p in $places) {
+  if (-not $p[0] -or -not (Test-Path -LiteralPath $p[0])) { continue }
+  $files = if ($p[1]) { Get-ChildItem -LiteralPath $p[0] -Filter *.lnk -Recurse -ErrorAction SilentlyContinue }
+           else { Get-ChildItem -LiteralPath $p[0] -Filter *.lnk -ErrorAction SilentlyContinue }
+  foreach ($f in $files) {
+    try {
+      $l = $sh.CreateShortcut($f.FullName)
+      if ($l.TargetPath -and ([IO.Path]::GetFullPath($l.TargetPath) -ieq $exe) -and ($l.IconLocation -ne $ico)) {
+        $l.IconLocation = $ico; $l.Save(); $f.FullName
+      }
+    } catch {}
+  }
+}
+"""
+
+
 class ThemeIcon:
     """Redraws the app icon in the theme's colors and puts it on the taskbar button, the
-    window and the tray. (The desktop shortcut and Start menu keep the installed icon.)"""
+    window, the tray, and the app's shortcuts (Start menu, desktop and taskbar pins)."""
     _handles = []                                # icons currently given to Windows
+    _shortcut_icon = None                        # what the shortcuts were last pointed at
     _lock = threading.Lock()
     _apply_lock = threading.Lock()               # one change at a time, newest settings win
 
@@ -344,6 +374,44 @@ class ThemeIcon:
             except Exception:
                 write_log("tray icon change failed: " + traceback.format_exc())
         cls.set_window_icon([app.hwnd, app.splash_hwnd if app.splash else None], ico)
+        default = key == "midnight" or colors == THEME_ICONS["midnight"]
+        cls.update_shortcuts(None if default else ico)
+
+    @classmethod
+    def update_shortcuts(cls, ico):
+        """Points the app's shortcuts at the themed icon (or back at the normal one when ico is
+        None). The Start menu and pinned taskbar buttons take their icon from these."""
+        if not FROZEN or sys.platform != "win32":
+            return
+        want = f"{ico},0" if ico else f"{os.path.abspath(sys.executable)},0"
+        if want == cls._shortcut_icon:
+            return
+        try:
+            env = dict(os.environ, UTF_EXE=os.path.abspath(sys.executable), UTF_ICON=want)
+            r = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass",
+                                "-Command", _SHORTCUT_PS], env=env, capture_output=True, text=True, timeout=30,
+                               creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            changed = [ln.strip() for ln in (r.stdout or "").splitlines() if ln.strip().lower().endswith(".lnk")]
+            cls._shortcut_icon = want
+            if changed:
+                cls._tell_windows(changed)
+            write_log(f"shortcut icons -> {'themed' if ico else 'normal'}: {len(changed)} updated"
+                      + (f" ({r.stderr.strip()[:200]})" if r.returncode else ""))
+        except Exception:
+            write_log("shortcut icon change failed: " + traceback.format_exc())
+
+    @staticmethod
+    def _tell_windows(paths):
+        """Asks Explorer to redraw those shortcuts (Start menu, desktop, taskbar pins)."""
+        try:
+            import ctypes
+            sh = ctypes.windll.shell32
+            sh.SHChangeNotify.argtypes = [ctypes.c_long, ctypes.c_uint, ctypes.c_void_p, ctypes.c_void_p]
+            for p in paths:
+                sh.SHChangeNotify(0x00002000, 0x0005 | 0x1000, ctypes.c_wchar_p(p), None)   # UPDATEITEM, PATHW|FLUSH
+            sh.SHChangeNotify(0x08000000, 0x0000 | 0x1000, None, None)                    # ASSOCCHANGED: refresh icon cache
+        except Exception:
+            write_log("icon refresh notice failed: " + traceback.format_exc())
 
 
 def custom_style(t, splash=False):
@@ -1544,6 +1612,8 @@ class TrendApp:
         self.start_tray()
         if self.settings.get("theme_icon", True) and icon_colors(self.settings, self.settings.get("theme")) != THEME_ICONS["midnight"]:
             self.refresh_icon()                      # the installed icon is the Midnight one already
+        else:                                        # make sure no shortcut still shows an old theme
+            threading.Thread(target=ThemeIcon.update_shortcuts, args=(None,), daemon=True).start()
         threading.Thread(target=self.single_instance_server, daemon=True).start()
         threading.Thread(target=self.background_loop, daemon=True).start()
 

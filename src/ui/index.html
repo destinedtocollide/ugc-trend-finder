@@ -1721,6 +1721,7 @@ function renderSettings() {
         const v = deriveTheme(c.base).vars;
         return themeTile({ key: "custom:" + c.id, label: c.name, bg: v["--bg"], side: v["--side"], card: v["--card2"], accent: v["--accent"], muted: v["--switch-off"] }, s.theme, true);
       }).join("")}<button class="theme add" id="b-newtheme"><i>${ICON.plus}</i>Create a theme</button></div></div>
+    <div class="field">${toggle("t-icon", "Match the app icon to my theme", "Recolors the icon on the taskbar, the window and the tray. The desktop shortcut keeps the normal icon.", s.theme_icon !== false)}</div>
   </div></div>
   <div class="card"><div class="card-h">Scanning</div><div class="card-b">
     <div class="field"><label>Request pace</label><p class="hint">How long to wait between requests to Roblox. Slower means fewer “slow down” pauses.</p>
@@ -1751,6 +1752,7 @@ function renderSettings() {
   wireToggle("t-tray", v => save({ close_to_tray: v }));
   wireToggle("t-report", v => save({ open_report: v }));
   wireToggle("t-upd", v => save({ auto_install: v }));
+  wireToggle("t-icon", v => save({ theme_icon: v }));
   document.querySelectorAll("#themes .theme, #themes-own .theme[data-t]").forEach(el => el.onclick = e => {
     if (e.target.closest(".acts")) return;
     document.querySelectorAll(".themes .theme").forEach(x => x.classList.toggle("on", x === el));

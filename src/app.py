@@ -100,6 +100,7 @@ DEFAULTS = {
     "tray_hint_shown": False,
     "update_attempt": {},
     "custom_themes": [],
+    "theme_icon": True,
 }
 
 
@@ -223,6 +224,126 @@ def theme_colors(settings, key):
 
 def theme_exists(settings, key):
     return key in THEMES or find_custom_theme(settings, key) is not None
+
+
+# Icon colors per built-in theme: (gradient top, gradient bottom, arrow).
+# Midnight keeps the exact colors of the icon the app ships with.
+THEME_ICONS = {
+    "midnight": ("#5b95f5", "#2f68d8", "#ffffff"),
+    "sakura": ("#ff8cc0", "#f0458f", "#ffffff"),
+    "violet": ("#a78fff", "#7657f0", "#ffffff"),
+    "emerald": ("#55d69b", "#23a86c", "#ffffff"),
+    "sunset": ("#ffa66b", "#f07424", "#ffffff"),
+    "graphite": ("#f0f0f0", "#bdbdbd", "#111111"),
+    "daylight": ("#5a93f5", "#2f6de0", "#ffffff"),
+    "blossom": ("#ea6aa3", "#c9347a", "#ffffff"),
+}
+
+
+def icon_colors(settings, key):
+    """(top, bottom, arrow) colors of the app icon for a theme."""
+    if key in THEME_ICONS:
+        return THEME_ICONS[key]
+    t = find_custom_theme(settings, key)
+    if not t:
+        return THEME_ICONS["midnight"]
+    v = t["vars"]
+    return v.get("--accent2", v["--accent"]), v.get("--accent-deep", v["--accent"]), v.get("--on-accent", "#ffffff")
+
+
+class ThemeIcon:
+    """Redraws the app icon in the theme's colors and puts it on the taskbar button, the
+    window and the tray. (The desktop shortcut and Start menu keep the installed icon.)"""
+    _handles = []                                # icons currently given to Windows
+    _lock = threading.Lock()
+    _apply_lock = threading.Lock()               # one change at a time, newest settings win
+
+    @staticmethod
+    def _rgb(h):
+        return tuple(int(h[i:i + 2], 16) for i in (1, 3, 5))
+
+    @classmethod
+    def files(cls, colors):
+        """(png, ico) paths for these colors, drawn once and kept in the app's folder."""
+        import hashlib
+        folder = os.path.join(DATA_HOME, "icons")
+        name = hashlib.sha1("|".join(colors).encode()).hexdigest()[:12]
+        png, ico = os.path.join(folder, name + ".png"), os.path.join(folder, name + ".ico")
+        if not (os.path.exists(png) and os.path.exists(ico)):
+            import make_icons
+            os.makedirs(folder, exist_ok=True)
+            top, bottom, fg = (cls._rgb(c) for c in colors)
+            im = make_icons.draw_icon(top, bottom, fg, size=512)
+            im.resize((256, 256), make_icons.Image.LANCZOS).save(png + ".tmp", "PNG")
+            im.save(ico + ".tmp", "ICO", sizes=make_icons.ICO_SIZES)
+            os.replace(png + ".tmp", png)
+            os.replace(ico + ".tmp", ico)
+            cls._prune(folder, keep={png, ico})
+        return png, ico
+
+    @staticmethod
+    def _prune(folder, keep):
+        try:
+            files = sorted((os.path.join(folder, f) for f in os.listdir(folder)), key=os.path.getmtime, reverse=True)
+            for f in files[24:]:                     # a few themes' worth is plenty
+                if f not in keep:
+                    os.remove(f)
+        except OSError:
+            pass
+
+    @classmethod
+    def set_window_icon(cls, hwnds, ico):
+        """Gives the windows the new icon (the taskbar button shows the big one)."""
+        a = WinFx.api()
+        if not a:
+            return
+        try:
+            ct, u = a["ct"], a["u"]
+            u.LoadImageW.argtypes = [ct.c_void_p, ct.c_wchar_p, ct.c_uint, ct.c_int, ct.c_int, ct.c_uint]
+            u.LoadImageW.restype = ct.c_void_p
+            u.SendMessageW.argtypes = [ct.c_void_p, ct.c_uint, ct.c_size_t, ct.c_void_p]
+            u.SendMessageW.restype = ct.c_void_p
+            u.GetSystemMetrics.argtypes = [ct.c_int]
+            u.DestroyIcon.argtypes = [ct.c_void_p]
+            big = u.LoadImageW(None, ico, 1, u.GetSystemMetrics(11), u.GetSystemMetrics(12), 0x10)  # SM_CXICON
+            small = u.LoadImageW(None, ico, 1, u.GetSystemMetrics(49), u.GetSystemMetrics(50), 0x10)  # SM_CXSMICON
+            if not big or not small:
+                return
+            for h in hwnds:
+                if h:
+                    u.SendMessageW(h, 0x0080, 1, big)        # WM_SETICON, ICON_BIG
+                    u.SendMessageW(h, 0x0080, 0, small)      # WM_SETICON, ICON_SMALL
+            with cls._lock:
+                old, cls._handles = cls._handles, [big, small]
+            for h in old:
+                u.DestroyIcon(h)
+        except Exception:
+            write_log("window icon change failed: " + traceback.format_exc())
+
+    @classmethod
+    def apply(cls, app):
+        """Updates every icon to match the current theme (or back to the normal icon)."""
+        with cls._apply_lock:
+            cls._apply(app)
+
+    @classmethod
+    def _apply(cls, app):
+        s = app.settings
+        key = s.get("theme", "midnight") if s.get("theme_icon", True) else "midnight"
+        colors = icon_colors(s, key)
+        try:
+            png, ico = cls.files(colors)
+        except Exception:
+            write_log("icon drawing failed: " + traceback.format_exc())
+            return
+        if app.tray:
+            try:
+                from PIL import Image
+                with Image.open(png) as im:
+                    app.tray.icon = im.copy()
+            except Exception:
+                write_log("tray icon change failed: " + traceback.format_exc())
+        cls.set_window_icon([app.hwnd, app.splash_hwnd if app.splash else None], ico)
 
 
 def custom_style(t, splash=False):
@@ -707,6 +828,8 @@ class Api:
         for k, v in (patch or {}).items():
             if k in allowed:
                 self._app.settings[k] = v
+        if "theme_icon" in (patch or {}):
+            self._app.refresh_icon()
         self._app.settings["gap"] = max(2.0, float(self._app.settings["gap"]))
         save_settings(self._app.settings)
         return self._app.public_settings()
@@ -779,6 +902,7 @@ class Api:
         s["theme"] = name
         save_settings(s)
         dark_titlebar(self._app.hwnd, theme_colors(s, name))
+        self._app.refresh_icon()
         return True
 
     def save_custom_theme(self, theme):
@@ -795,6 +919,7 @@ class Api:
         s["custom_themes"] = themes
         if s.get("theme") == CUSTOM_PREFIX + t["id"]:
             dark_titlebar(self._app.hwnd, theme_colors(s, s["theme"]))
+            self._app.refresh_icon()
         save_settings(s)
         return {"ok": True, "settings": self._app.public_settings()}
 
@@ -804,6 +929,7 @@ class Api:
         if s.get("theme") == CUSTOM_PREFIX + str(tid):
             s["theme"] = "midnight"
             dark_titlebar(self._app.hwnd, theme_colors(s, "midnight"))
+            self._app.refresh_icon()
         save_settings(s)
         return self._app.public_settings()
 
@@ -961,6 +1087,11 @@ class TrendApp:
             "update_status": self.update_status, "tray": bool(self.tray),
             "just_updated": self.just_updated,
         }
+
+    def refresh_icon(self):
+        """Redraws the taskbar/window/tray icon for the current theme, off the calling thread."""
+        if sys.platform == "win32" or self.tray:
+            threading.Thread(target=ThemeIcon.apply, args=(self,), daemon=True).start()
 
     def notify(self, title, text):
         if self.tray:
@@ -1261,6 +1392,8 @@ class TrendApp:
                 pass
         centered = WinFx.center(h)
         write_log(f"startup: loading window hwnd={h} centered={centered} rect={WinFx.rect(h)}")
+        if self.settings.get("theme_icon", True) and icon_colors(self.settings, self.settings.get("theme")) != THEME_ICONS["midnight"]:
+            self.refresh_icon()
         if not self.revealed:
             try:
                 self.splash.show()
@@ -1409,6 +1542,8 @@ class TrendApp:
             close_native_splash()
         threading.Thread(target=self._reveal_watchdog, daemon=True).start()
         self.start_tray()
+        if self.settings.get("theme_icon", True) and icon_colors(self.settings, self.settings.get("theme")) != THEME_ICONS["midnight"]:
+            self.refresh_icon()                      # the installed icon is the Midnight one already
         threading.Thread(target=self.single_instance_server, daemon=True).start()
         threading.Thread(target=self.background_loop, daemon=True).start()
 

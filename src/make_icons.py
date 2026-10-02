@@ -38,33 +38,42 @@ def splash(icon, folder):
     im.resize((W, H), Image.LANCZOS).save(os.path.join(folder, "splash.png"))
 
 
-def main(folder=None):
-    folder = folder or os.path.dirname(os.path.abspath(__file__))
+def draw_icon(top=(0x5b, 0x95, 0xf5), bottom=(0x2f, 0x68, 0xd8), fg=(255, 255, 255), size=1024):
+    """The app icon: a rounded tile with a gradient and a rising arrow. The app also calls this
+    to redraw the icon in the colors of the current theme."""
     S = 1024
     grad = Image.new("RGBA", (S, S))
     gd = ImageDraw.Draw(grad)
-    top, bot = (0x5b, 0x95, 0xf5), (0x2f, 0x68, 0xd8)
     for y in range(S):
         t = y / (S - 1)
-        gd.line([(0, y), (S, y)], fill=tuple(int(a + (b - a) * t) for a, b in zip(top, bot)) + (255,))
+        gd.line([(0, y), (S, y)], fill=tuple(int(a + (b - a) * t) for a, b in zip(top, bottom)) + (255,))
     mask = Image.new("L", (S, S), 0)
     ImageDraw.Draw(mask).rounded_rectangle((24, 24, S - 24, S - 24), radius=230, fill=255)
     im = Image.new("RGBA", (S, S), (0, 0, 0, 0))
     im.paste(grad, (0, 0), mask)
     d = ImageDraw.Draw(im)
     w = 92
+    fg = tuple(fg)
 
     def dot(x, y):
-        d.ellipse((x - w / 2, y - w / 2, x + w / 2, y + w / 2), fill="white")
+        d.ellipse((x - w / 2, y - w / 2, x + w / 2, y + w / 2), fill=fg)
     pts = [(215, 700), (420, 460), (590, 590), (815, 330)]
-    d.line(pts, fill="white", width=w, joint="curve")
-    d.line([(610, 330), (815, 330)], fill="white", width=w)
-    d.line([(815, 330), (815, 535)], fill="white", width=w)
+    d.line(pts, fill=fg, width=w, joint="curve")
+    d.line([(610, 330), (815, 330)], fill=fg, width=w)
+    d.line([(815, 330), (815, 535)], fill=fg, width=w)
     for x, y in (pts[0], pts[-1], (610, 330), (815, 535)):
         dot(x, y)
+    return im if size == S else im.resize((size, size), Image.LANCZOS)
+
+
+ICO_SIZES = [(16, 16), (20, 20), (24, 24), (32, 32), (40, 40), (48, 48), (64, 64), (128, 128), (256, 256)]
+
+
+def main(folder=None):
+    folder = folder or os.path.dirname(os.path.abspath(__file__))
+    im = draw_icon()
     im.resize((256, 256), Image.LANCZOS).save(os.path.join(folder, "icon.png"))
-    im.save(os.path.join(folder, "icon.ico"),
-            sizes=[(16, 16), (20, 20), (24, 24), (32, 32), (40, 40), (48, 48), (64, 64), (128, 128), (256, 256)])
+    im.save(os.path.join(folder, "icon.ico"), sizes=ICO_SIZES)
     splash(im, folder)
 
 
